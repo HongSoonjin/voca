@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>단어콕</title>
+<title>소은콕</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1F2A44">
 <style>
@@ -79,7 +79,7 @@ function pick(n,only){ // weakest boxes first, random within box
 }
 function home(){
   const t=day(),n=S.today.d===t?S.today.n:0,known=words().filter(x=>box(x.w)>=4).length,tot=words().length;
-  app.innerHTML=`<h1>단어콕 📌</h1><p class="sub">하루 10분, 콕콕 외우자!</p>
+  app.innerHTML=`<h1>소은콕 📌</h1><p class="sub">하루 10분, 콕콕 외우자!</p>
   <div class="stats"><div class="stat"><b>${S.last===t||S.streak?S.streak:0}일</b><span>연속 학습</span></div><div class="stat"><b>${n}</b><span>오늘 푼 단어</span></div><div class="stat"><b>${known}/${tot}</b><span>외운 단어</span></div></div>
   <div class="bar"><i style="width:${known/tot*100}%"></i></div>
   <div class="chips">${[['all','전체'],['1','기본'],['2','심화']].map(([v,t])=>`<button class="chip${S.lv===v?' on':''}" onclick="setLv('${v}')">${t}</button>`).join('')}</div>
