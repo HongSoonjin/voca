@@ -145,6 +145,15 @@ const groups=()=>{const m={};S.custom.forEach((c,k)=>{(m[gname(c)]=m[gname(c)]||
 function groupsHtml(){
   return groups().map(([g,ks],gi)=>`<div style="margin-top:14px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="flex:1 1 100%;font-size:19px">📁 ${g.replace(/</g,'&lt;')} <span class="count">${ks.length}개</span></b><button class="link" style="margin:0" onclick="gcards(${gi})">📖 카드</button><button class="link" style="margin:0" onclick="gquiz(${gi})">🎯 퀴즈</button><button class="link" style="margin:0" onclick="gspell(${gi})">✏️ 쓰기</button><button class="link" style="margin:0;color:var(--coral)" onclick="gdel(${gi})">그룹 삭제</button></div>`+ks.map(k=>{const c=S.custom[k];return `<div class="stat" style="display:flex;align-items:center;gap:8px;margin:8px 0 0;text-align:left"><button class="spk" style="width:40px;height:40px;font-size:18px" onclick="speak('${c.w}')">🔊</button><span style="flex:1"><b style="display:inline;font-size:18px">${c.w}</b> ${c.m}</span><button class="link" style="margin:0" onclick="del(${k})">삭제</button></div>`}).join('')+`</div>`).join('');
 }
+function cleanLine(l){
+  l=l.replace(/[|\t]+/g,' ').replace(/^[\s\d.)\-•*]+/,'');
+  const m=l.match(/^([A-Za-z][A-Za-z'-]*(?:\s+[A-Za-z][A-Za-z'-]*)*)\s*(.*)$/);if(!m)return '';
+  let k=m[2].replace(/[^가-힣~,.()·\/\s]/g,' ').replace(/\s+/g,' ').trim();
+  const t=k.split(' ').filter(Boolean),one=t.filter(x=>/^[가-힣]$/.test(x)).length;
+  if(t.length>1&&one/t.length>=.5)k=k.replace(/([가-힣~])\s+(?=[가-힣])/g,'$1');
+  k=k.replace(/^[,.·\s]+|[,.\s]+$/g,'');
+  return /[가-힣]/.test(k)?m[1]+' '+k:'';
+}
 function prep(file){return new Promise(res=>{const im=new Image();im.onload=()=>{try{const sc=Math.min(2.5,2200/Math.max(im.width,1));const c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);const g=c.getContext('2d');g.drawImage(im,0,0,c.width,c.height);const d=g.getImageData(0,0,c.width,c.height),a=d.data;for(let i=0;i<a.length;i+=4){let v=a[i]*.3+a[i+1]*.59+a[i+2]*.11;v=Math.max(0,Math.min(255,(v-110)*1.6+110));a[i]=a[i+1]=a[i+2]=v}g.putImageData(d,0,0);c.toBlob(b=>res(b||file),'image/png')}catch(e){res(file)}};im.onerror=()=>res(file);im.src=URL.createObjectURL(file)})}
 function addw(){
   app.innerHTML=`<div class="top"><button class="back" onclick="home()">← 처음으로</button></div><h1>내 단어 추가</h1><p class="sub">한 줄에 하나씩, “영어 뜻” 형식으로 써주세요.<br>예) apple 사과</p><button class="go" style="background:var(--mint);margin:0 0 8px" onclick="$('#ph').click()">📷 사진에서 단어 읽기</button><input type="file" id="ph" accept="image/*" hidden><div class="msg" id="st" style="font-size:15px;min-height:22px;margin:0 0 8px"></div><input id="gn" placeholder="그룹 이름 (예: 3과, 학원 단어)" style="font-size:18px;margin-bottom:8px"><textarea id="ta" placeholder="apple 사과&#10;banana 바나나"></textarea><button class="go" onclick="addSave()">저장하기</button><div class="msg" id="r"></div><p class="sub" style="margin-top:18px">추가한 단어: ${S.custom.length}개</p>${groupsHtml()}`;
@@ -156,10 +165,10 @@ function addw(){
       if(!window.Tesseract)await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
       const img=await prep(f);
       const lg={logger:m=>{if(m.progress)st.textContent='읽는 중… '+Math.round(m.progress*100)+'%'}};
-      let r;
-      try{r=await Tesseract.recognize(img,'eng+kor',Object.assign({langPath:'https://tessdata.projectnaptha.com/4.0.0_best'},lg))}
-      catch(e2){r=await Tesseract.recognize(img,'eng+kor',lg)}
-      const out=r.data.text.split('\n').map(l=>l.replace(/[|\t]+/g,' ').replace(/^[\s\d.)\-•*]+/,'').replace(/\s+/g,' ').trim()).filter(l=>/^[A-Za-z][A-Za-z'-]*\s+\S/.test(l));
+      let text;
+      const run=async lp=>{const w=await Tesseract.createWorker('eng+kor',1,Object.assign({},lg,lp?{langPath:lp}:{}));try{await w.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'})}catch(e){}const r=await w.recognize(img);await w.terminate();return r.data.text};
+      try{text=await run('https://tessdata.projectnaptha.com/4.0.0_best')}catch(e2){text=await run()}
+      const out=text.split('\n').map(cleanLine).filter(Boolean);
       const ta=$('#ta');ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+out.join('\n');
       st.textContent=out.length?out.length+'줄을 찾았어요. 한글이 이상하면 구글 렌즈로 복사해 붙여넣는 게 더 정확해요. 고친 뒤 저장하세요!':'단어를 못 찾았어요. 글자가 크게 나오게 다시 찍어보세요.';
     }catch(e){st.textContent='읽기에 실패했어요. 인터넷 연결을 확인해 주세요.'}
@@ -167,7 +176,7 @@ function addw(){
   $('#ph').onchange=e=>{ocr(e.target.files[0]);e.target.value=''};
   window.addSave=()=>{
     let n=0;const g=$('#gn').value.trim()||(new Date().getMonth()+1)+'/'+new Date().getDate()+' 추가';
-    $('#ta').value.split('\n').forEach(l=>{l=l.trim();const i=l.indexOf(' ');if(i>0){const w=l.slice(0,i),m=l.slice(i+1).trim();if(m&&!words().some(x=>x.w===w)){S.custom.push({w,m,g});n++}}});
+    $('#ta').value.split('\n').forEach(l=>{l=l.trim();const mm=l.match(/^([A-Za-z][A-Za-z'.-]*(?:\s+[A-Za-z][A-Za-z'.-]*)*)\s+(\S.*)$/);if(mm){const w=mm[1],m=mm[2].trim();if(m&&!words().some(x=>x.w===w)){S.custom.push({w,m,g});n++}}});
     save();addw();$('#r').textContent=n+'개 저장했어요!';
   };
   window.gcards=gi=>cards(groups()[gi][0]);
