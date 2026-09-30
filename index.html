@@ -84,7 +84,7 @@ function home(){
   <div class="bar"><i style="width:${known/tot*100}%"></i></div>
   <div class="chips">${[['all','전체'],['1','기본'],['2','심화']].map(([v,t])=>`<button class="chip${S.lv===v?' on':''}" onclick="setLv('${v}')">${t}</button>`).join('')}</div>
   <button class="big" onclick="cards()">🃏 단어 카드<small>듣고, 뒤집고, 알아요/몰라요</small></button>
-  <button class="big" onclick="cards(true)">⭐ 내 단어 카드<small>내가 추가한 단어만 공부 (${S.custom.length}개)</small></button>
+  <button class="big" onclick="folders()">⭐ 내 단어 공부<small>폴더별로 골라서 공부 (${S.custom.length}개)</small></button>
   <button class="big" onclick="quiz()">🎯 뜻 맞히기 퀴즈<small>발음 듣고 4개 중 고르기</small></button>
   <button class="big" onclick="spell()">✏️ 스펠링 쓰기<small>소리를 듣고 직접 써보기</small></button>
   <button class="big" onclick="addw()">➕ 내 단어 추가<small>학원·교과서 단어 넣기</small></button>`;
@@ -142,8 +142,21 @@ function spell(only){
 }
 const gname=c=>c.g||'내 단어';
 const groups=()=>{const m={};S.custom.forEach((c,k)=>{(m[gname(c)]=m[gname(c)]||[]).push(k)});return Object.entries(m)};
+window.gcards=gi=>cards(groups()[gi][0]);
+window.gquiz=gi=>quiz(groups()[gi][0]);
+window.gspell=gi=>spell(groups()[gi][0]);
+function folders(){
+  const gs=groups();
+  if(!gs.length){alert('아직 추가한 단어가 없어요. "내 단어 추가"에서 먼저 넣어주세요.');return}
+  app.innerHTML=`<div class="top"><button class="back" onclick="home()">← 처음으로</button></div><h1>내 단어 공부</h1><p class="sub">공부할 폴더를 골라요</p><button class="big" onclick="cards(true)">📚 전체 폴더<small>${S.custom.length}개 단어를 섞어서</small></button>`+gs.map(([g,ks],gi)=>`<div style="margin-bottom:14px"><button class="big" style="margin:0 0 6px" onclick="gcards(${gi})">📁 ${g.replace(/</g,'&lt;')}<small>${ks.length}개 · 카드로 공부</small></button><div style="display:flex;gap:14px;padding-left:6px"><button class="link" style="margin:0" onclick="gquiz(${gi})">🎯 퀴즈</button><button class="link" style="margin:0" onclick="gspell(${gi})">✏️ 쓰기</button></div></div>`).join('');
+}
+const OPEN={};
+const refresh=()=>{const e=$('#gl');if(e)e.innerHTML=groupsHtml()};
 function groupsHtml(){
-  return groups().map(([g,ks],gi)=>`<div style="margin-top:14px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="flex:1 1 100%;font-size:19px">📁 ${g.replace(/</g,'&lt;')} <span class="count">${ks.length}개</span></b><button class="link" style="margin:0" onclick="gcards(${gi})">📖 카드</button><button class="link" style="margin:0" onclick="gquiz(${gi})">🎯 퀴즈</button><button class="link" style="margin:0" onclick="gspell(${gi})">✏️ 쓰기</button><button class="link" style="margin:0;color:var(--coral)" onclick="gdel(${gi})">그룹 삭제</button></div>`+ks.map(k=>{const c=S.custom[k];return `<div class="stat" style="display:flex;align-items:center;gap:8px;margin:8px 0 0;text-align:left"><button class="spk" style="width:40px;height:40px;font-size:18px" onclick="speak('${c.w}')">🔊</button><span style="flex:1"><b style="display:inline;font-size:18px">${c.w}</b> ${c.m}</span><button class="link" style="margin:0" onclick="del(${k})">삭제</button></div>`}).join('')+`</div>`).join('');
+  const gs=groups();
+  return `<p class="sub" style="margin-top:18px">추가한 단어 ${S.custom.length}개 · 폴더 ${gs.length}개</p>`+gs.map(([g,ks],gi)=>{
+    const o=OPEN[g],nm=g.replace(/</g,'&lt;');
+    return `<div style="margin-bottom:10px"><button class="big" style="margin:0;padding:14px 16px;font-size:19px;display:flex;align-items:center;gap:8px" onclick="tg(${gi})"><span>${o?'📂':'📁'}</span><b style="flex:1;font-weight:normal">${nm}</b><span class="count" style="font-size:15px">${ks.length}개 ${o?'▾':'▸'}</span></button>`+(o?`<div style="padding:10px 2px 0"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px"><button class="link" style="margin:0" onclick="gcards(${gi})">📖 카드</button><button class="link" style="margin:0" onclick="gquiz(${gi})">🎯 퀴즈</button><button class="link" style="margin:0" onclick="gspell(${gi})">✏️ 쓰기</button><button class="link" style="margin:0;color:var(--coral)" onclick="gdel(${gi})">폴더 삭제</button></div>`+ks.map(k=>{const c=S.custom[k];return `<div class="stat" style="display:flex;align-items:center;gap:8px;margin:8px 0 0;text-align:left"><button class="spk" style="width:40px;height:40px;font-size:18px" onclick="speak('${c.w}')">🔊</button><span style="flex:1"><b style="display:inline;font-size:18px">${c.w}</b> ${c.m}</span><button class="link" style="margin:0" onclick="del(${k})">삭제</button></div>`}).join('')+`</div>`:'')+`</div>`}).join('');
 }
 function cleanLine(l){
   l=l.replace(/[|\t]+/g,' ').replace(/^[\s\d.)\-•*]+/,'');
@@ -156,8 +169,9 @@ function cleanLine(l){
 }
 function prep(file){return new Promise(res=>{const im=new Image();im.onload=()=>{try{const sc=Math.min(2.5,2200/Math.max(im.width,1));const c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);const g=c.getContext('2d');g.drawImage(im,0,0,c.width,c.height);const d=g.getImageData(0,0,c.width,c.height),a=d.data;for(let i=0;i<a.length;i+=4){let v=a[i]*.3+a[i+1]*.59+a[i+2]*.11;v=Math.max(0,Math.min(255,(v-110)*1.6+110));a[i]=a[i+1]=a[i+2]=v}g.putImageData(d,0,0);c.toBlob(b=>res(b||file),'image/png')}catch(e){res(file)}};im.onerror=()=>res(file);im.src=URL.createObjectURL(file)})}
 function addw(){
-  app.innerHTML=`<div class="top"><button class="back" onclick="home()">← 처음으로</button></div><h1>내 단어 추가</h1><p class="sub">한 줄에 하나씩, “영어 뜻” 형식으로 써주세요.<br>예) apple 사과</p><button class="go" style="background:var(--mint);margin:0 0 8px" onclick="$('#ph').click()">📷 사진에서 단어 읽기</button><input type="file" id="ph" accept="image/*" hidden><div class="msg" id="st" style="font-size:15px;min-height:22px;margin:0 0 8px"></div><input id="gn" placeholder="그룹 이름 (예: 3과, 학원 단어)" style="font-size:18px;margin-bottom:8px"><textarea id="ta" placeholder="apple 사과&#10;banana 바나나"></textarea><button class="go" onclick="addSave()">저장하기</button><div class="msg" id="r"></div><p class="sub" style="margin-top:18px">추가한 단어: ${S.custom.length}개</p>${groupsHtml()}`;
-  window.del=k=>{S.custom.splice(k,1);save();addw()};
+  app.innerHTML=`<div class="top"><button class="back" onclick="home()">← 처음으로</button></div><h1>내 단어 추가</h1><p class="sub">한 줄에 하나씩, “영어 뜻” 형식으로 써주세요.<br>예) apple 사과</p><button class="go" style="background:var(--mint);margin:0 0 8px" onclick="$('#ph').click()">📷 사진에서 단어 읽기</button><input type="file" id="ph" accept="image/*" hidden><div class="msg" id="st" style="font-size:15px;min-height:22px;margin:0 0 8px"></div><input id="gn" placeholder="그룹 이름 (예: 3과, 학원 단어)" style="font-size:18px;margin-bottom:8px"><textarea id="ta" placeholder="apple 사과&#10;banana 바나나"></textarea><button class="go" onclick="addSave()">저장하기</button><div class="msg" id="r"></div><div id="gl">${groupsHtml()}</div>`;
+  window.tg=gi=>{const g=groups()[gi][0];OPEN[g]=!OPEN[g];refresh()};
+  window.del=k=>{S.custom.splice(k,1);save();refresh()};
   window.ocr=async f=>{
     const st=$('#st');if(!f)return;
     st.textContent='글자 읽는 중… (처음엔 1~2분 걸려요)';
@@ -182,7 +196,7 @@ function addw(){
   window.gcards=gi=>cards(groups()[gi][0]);
   window.gquiz=gi=>quiz(groups()[gi][0]);
   window.gspell=gi=>spell(groups()[gi][0]);
-  window.gdel=gi=>{const [g,ks]=groups()[gi];if(confirm('"'+g+'" 그룹의 단어 '+ks.length+'개를 모두 지울까요?')){S.custom=S.custom.filter(c=>gname(c)!==g);save();addw()}};
+  window.gdel=gi=>{const [g,ks]=groups()[gi];if(confirm('"'+g+'" 그룹의 단어 '+ks.length+'개를 모두 지울까요?')){S.custom=S.custom.filter(c=>gname(c)!==g);save();refresh()}};
 }
 home();
 </script>
