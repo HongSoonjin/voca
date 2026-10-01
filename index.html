@@ -64,12 +64,15 @@ window.setLv=v=>{S.lv=v;save();home()};
 const box=w=>S.box[w]||0;
 function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.85;speechSynthesis.speak(u)}catch(e){}}
 const GOAL=10,lv=x=>Math.floor((x||0)/100)+1;
+const TITLES=['🌱 단어 새싹','🧭 단어 탐험가','🎒 단어 수집가','🏹 단어 사냥꾼','🥋 단어 달인','🧙 단어 마법사','🛡️ 단어 기사','🦸 단어 영웅','🐉 단어 전설','👑 단어 황제'];
+const ti=l=>Math.min(TITLES.length-1,Math.floor(l/10));
+const ttl=l=>TITLES[ti(l)];
 const PR_OK=['정답!','좋아!','대박!','굿!','멋져!','완벽!'],PR_NO=['아깝다!','괜찮아, 다시!','다음엔 맞힌다!','힘내자!'];
 const pr=a=>a[Math.random()*a.length|0];
 let AC;
 function sfx(k){if(S.mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const seq={ok:[[660,0,.12],[880,.1,.18]],combo:[[660,0,.1],[880,.09,.1],[1100,.18,.2]],bad:[[260,0,.12],[200,.12,.22]],done:[[523,0,.12],[659,.12,.12],[784,.24,.12],[1047,.36,.3]]}[k];const t0=AC.currentTime;seq.forEach(([f,t,d])=>{const o=AC.createOscillator(),g=AC.createGain();o.type=k==='bad'?'triangle':'sine';o.frequency.value=f;g.gain.setValueAtTime(.001,t0+t);g.gain.exponentialRampToValueAtTime(.18,t0+t+.02);g.gain.exponentialRampToValueAtTime(.001,t0+t+d);o.connect(g);g.connect(AC.destination);o.start(t0+t);o.stop(t0+t+d+.05)})}catch(e){}}
 function toast(t,ms){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.className='toast';document.body.appendChild(e)}e.textContent=t;e.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>{e.style.opacity=0},ms||1100)}
-function gain(p){const b=lv(S.xp);S.xp=(S.xp||0)+p;if(lv(S.xp)>b)setTimeout(()=>{sfx('done');toast('🎉 레벨 업! Lv.'+lv(S.xp),2000)},900)}
+function gain(p){const b=lv(S.xp);S.xp=(S.xp||0)+p;if(lv(S.xp)>b)setTimeout(()=>{sfx('done');toast(ti(lv(S.xp))>ti(b)?'🎊 새 호칭! '+ttl(lv(S.xp)):'🎉 레벨 업! Lv.'+lv(S.xp),2400)},900)}
 function newGame(){return{combo:0,best:0,score:0,
   ans(ok){if(ok){this.combo++;this.best=Math.max(this.best,this.combo);const p=10+Math.min(this.combo-1,5)*2;this.score+=p;gain(p);sfx(this.combo>=3?'combo':'ok');toast(this.combo>=2?'🔥 '+this.combo+'콤보! +'+p:pr(PR_OK)+' +'+p)}else{this.combo=0;sfx('bad');toast(pr(PR_NO))}},
   tag(){return '· ⭐'+this.score+(this.combo>1?' 🔥'+this.combo:'')},
@@ -95,7 +98,7 @@ function pick(n,only){ // weakest boxes first, random within box
 function home(){
   const t=day(),n=S.today.d===t?S.today.n:0,mn=S.today.d===t?(S.today.mn||0):0,known=words().filter(x=>box(x.w)>=4).length,tot=words().length;
   app.innerHTML=`<h1>소은콕 📌</h1><p class="sub">하루 10분, 콕콕 외우자!</p>
-  <div class="stat" style="text-align:left;margin-bottom:10px"><div style="display:flex;justify-content:space-between"><b style="display:inline;font-size:20px">Lv.${lv(S.xp)} ⭐</b><span>${(S.xp||0)%100}/100 XP</span></div><div class="bar" style="margin:6px 0 0"><i style="width:${(S.xp||0)%100}%;background:var(--sun)"></i></div></div>
+  <div class="stat" style="text-align:left;margin-bottom:10px"><div style="display:flex;justify-content:space-between"><b style="display:inline;font-size:20px">Lv.${lv(S.xp)} ${ttl(lv(S.xp))}</b><span>${(S.xp||0)%100}/100 XP</span></div><div class="bar" style="margin:6px 0 0"><i style="width:${(S.xp||0)%100}%;background:var(--sun)"></i></div>${ti(lv(S.xp))<TITLES.length-1?`<span class="count" style="font-size:13px">다음 호칭 ${TITLES[ti(lv(S.xp))+1]} · Lv.${(ti(lv(S.xp))+1)*10}</span>`:''}</div>
   <div class="stat" style="text-align:left;margin-bottom:14px"><div>🎯 오늘의 미션: 내 단어 ${GOAL}개 맞히기 ${S.today.d===t&&S.today.done?'✅':''}</div><div class="bar" style="margin:6px 0 4px"><i style="width:${Math.min(100,mn/GOAL*100)}%"></i></div><span>${Math.min(mn,GOAL)}/${GOAL} · 퀴즈·쓰기로 맞혀야 올라가요 · +30 XP${S.custom.length?'':' · 먼저 "내 단어 추가"에서 단어를 넣어 주세요'}</span></div>
   <div class="stats"><div class="stat"><b>${S.last===t||S.streak?S.streak:0}일</b><span>연속 학습</span></div><div class="stat"><b>${n}</b><span>오늘 푼 단어</span></div><div class="stat"><b>${known}/${tot}</b><span>외운 단어</span></div></div>
   <div class="bar"><i style="width:${known/tot*100}%"></i></div>
