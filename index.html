@@ -59,7 +59,7 @@ textarea{font-size:16px;text-align:left;height:140px}
 const BASE=`school 학교|teacher 선생님|student 학생|classroom 교실|homework 숙제|library 도서관|lesson 수업|question 질문|answer 대답|remember 기억하다|forget 잊다|study 공부하다|learn 배우다|practice 연습하다|understand 이해하다|important 중요한|difficult 어려운|easy 쉬운|different 다른|same 같은|family 가족|friend 친구|neighbor 이웃|brother 형제|sister 자매|parent 부모|grandmother 할머니|breakfast 아침 식사|lunch 점심|dinner 저녁 식사|vegetable 채소|fruit 과일|delicious 맛있는|hungry 배고픈|thirsty 목마른|weather 날씨|sunny 화창한|rainy 비 오는|cloudy 흐린|season 계절|winter 겨울|summer 여름|morning 아침|evening 저녁|yesterday 어제|tomorrow 내일|always 항상|sometimes 가끔|never 결코 ~않다|hobby 취미|music 음악|movie 영화|sport 운동|soccer 축구|swim 수영하다|dance 춤추다|travel 여행하다|airport 공항|station 역|museum 박물관|hospital 병원|restaurant 식당|market 시장|street 거리|beautiful 아름다운|dangerous 위험한|safe 안전한|healthy 건강한|happy 행복한|angry 화난|tired 피곤한|excited 신난|worried 걱정하는|kind 친절한|honest 정직한|brave 용감한|shy 수줍은|smart 똑똑한|borrow 빌리다|lend 빌려주다|choose 고르다|decide 결정하다|invite 초대하다|visit 방문하다|enjoy 즐기다|believe 믿다|wait 기다리다|help 돕다`.split('|').map(s=>{const i=s.indexOf(' ');return{w:s.slice(0,i),m:s.slice(i+1)}});
 const HARD=`achieve 달성하다|advantage 장점|advice 조언|afford ~할 여유가 있다|ancient 고대의|appear 나타나다|arrange 정리하다|attend 참석하다|average 평균|avoid 피하다|behavior 행동|benefit 이익|celebrate 기념하다|century 세기|challenge 도전|cheerful 쾌활한|communicate 의사소통하다|compare 비교하다|complain 불평하다|complete 완성하다|concentrate 집중하다|condition 상태|confident 자신 있는|consider 고려하다|contain 포함하다|contest 대회|courage 용기|creative 창의적인|culture 문화|customer 고객|damage 손해|decorate 장식하다|describe 묘사하다|destroy 파괴하다|develop 발전시키다|discover 발견하다|distance 거리|divide 나누다|donate 기부하다|effort 노력|elderly 나이 든|empty 빈|encourage 격려하다|energy 에너지|enough 충분한|environment 환경|equal 동등한|escape 탈출하다|event 행사|exact 정확한|examine 검사하다|experience 경험|explain 설명하다|express 표현하다|familiar 익숙한|festival 축제|foreign 외국의|freedom 자유|garbage 쓰레기|generous 관대한|gentle 온화한|grateful 감사하는|guess 추측하다|habit 습관|harmony 조화|huge 거대한|imagine 상상하다|improve 향상시키다|include 포함하다|increase 증가하다|information 정보|invent 발명하다|journey 여정|knowledge 지식|language 언어|local 지역의|lonely 외로운|manage 관리하다|mention 언급하다|mistake 실수|modern 현대의|necessary 필요한|offer 제안하다|opinion 의견|ordinary 평범한|painful 고통스러운|patient 참을성 있는|perform 공연하다|permit 허락하다|plenty 많음|polite 예의 바른|popular 인기 있는|position 위치|possible 가능한|prepare 준비하다|prevent 막다|private 사적인|produce 생산하다|promise 약속하다|protect 보호하다|proud 자랑스러운|provide 제공하다|public 공공의|recycle 재활용하다|reduce 줄이다|refuse 거절하다|region 지역|relax 휴식하다|rely 의존하다|remain 남다|repeat 반복하다|require 요구하다|rescue 구조하다|respect 존경하다|respond 대답하다|responsible 책임감 있는|result 결과|reward 보상|risk 위험|role 역할|satisfy 만족시키다|scared 무서워하는|serious 심각한|shelter 대피소|similar 비슷한|situation 상황|society 사회|solve 해결하다|spread 퍼지다|stranger 낯선 사람|succeed 성공하다|suggest 제안하다|support 지지하다|surprise 놀라게 하다|survive 살아남다|tradition 전통|useful 유용한|volunteer 자원봉사자|wisdom 지혜|wonder 궁금해하다|worth ~할 가치가 있는`.split('|').map(s=>{const i=s.indexOf(' ');return{w:s.slice(0,i),m:s.slice(i+1),l:2}});
 const $=s=>document.querySelector(s),app=$('#app');
-let S={xp:0,mute:false,lv:'all',seen:{},box:{},custom:[],streak:0,last:'',today:{d:'',n:0}};
+let S={wrong:{},cfg:null,dirty:false,lastSync:0,xp:0,mute:false,lv:'all',seen:{},box:{},custom:[],streak:0,last:'',today:{d:'',n:0}};
 try{const r=localStorage.getItem('vocaS');if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
 const save=()=>{try{localStorage.setItem('vocaS',JSON.stringify(S))}catch(e){}};
 const day=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
@@ -79,7 +79,7 @@ const pr=a=>a[Math.random()*a.length|0];
 let AC;
 function sfx(k){if(S.mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const seq={ok:[[660,0,.12],[880,.1,.18]],combo:[[660,0,.1],[880,.09,.1],[1100,.18,.2]],bad:[[260,0,.12],[200,.12,.22]],done:[[523,0,.12],[659,.12,.12],[784,.24,.12],[1047,.36,.3]]}[k];const t0=AC.currentTime;seq.forEach(([f,t,d])=>{const o=AC.createOscillator(),g=AC.createGain();o.type=k==='bad'?'triangle':'sine';o.frequency.value=f;g.gain.setValueAtTime(.001,t0+t);g.gain.exponentialRampToValueAtTime(.18,t0+t+.02);g.gain.exponentialRampToValueAtTime(.001,t0+t+d);o.connect(g);g.connect(AC.destination);o.start(t0+t);o.stop(t0+t+d+.05)})}catch(e){}}
 function toast(t,ms){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.className='toast';document.body.appendChild(e)}e.textContent=t;e.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>{e.style.opacity=0},ms||1100)}
-function gain(p){const b=lv(S.xp);S.xp=(S.xp||0)+p;applyTheme();if(lv(S.xp)>b)setTimeout(()=>{sfx('done');toast(ti(lv(S.xp))>ti(b)?'🎊 새 호칭! '+ttl(lv(S.xp)):'🎉 레벨 업! Lv.'+lv(S.xp),2400)},900)}
+function gain(p){const b=lv(S.xp);S.xp=(S.xp||0)+p;{const t=day();if(S.today.d!==t||!S.today.ws)S.today={d:t,n:0,ws:{}};S.today.xp=(S.today.xp||0)+p}applyTheme();if(lv(S.xp)>b)setTimeout(()=>{sfx('done');toast(ti(lv(S.xp))>ti(b)?'🎊 새 호칭! '+ttl(lv(S.xp)):'🎉 레벨 업! Lv.'+lv(S.xp),2400)},900)}
 function newGame(){return{combo:0,best:0,score:0,right:0,wrong:0,bonus:0,
   ans(ok){if(ok){this.right++;this.combo++;this.best=Math.max(this.best,this.combo);const p=10+Math.min(this.combo-1,5)*2;this.score+=p;gain(p);sfx(this.combo>=3?'combo':'ok');toast(this.combo>=2?'🔥 '+this.combo+'콤보! +'+p:pr(PR_OK)+' +'+p)}else{this.wrong++;this.combo=0;sfx('bad');toast(pr(PR_NO))}},
   tag(){return '· ⭐'+this.score+(this.combo>1?' 🔥'+this.combo:'')},
@@ -93,15 +93,60 @@ function mark(w,ok,kind,ms){
   else if(kind!=='card'&&due(w)){S.box[w]=Math.min(5,box(w)+1);S.seen[w]=Date.now()}
   const t=day();
   if(S.today.d!==t||!S.today.ws)S.today={d:t,n:0,ws:{}};
+  if(kind!=='card'){S.today.tr=(S.today.tr||0)+1;if(ok)S.today.ok=(S.today.ok||0)+1}
+  if(!ok){const x=BASE.concat(HARD,S.custom).find(z=>z.w===w),o=S.wrong[w]||{c:0};S.wrong[w]={m:x?x.m:(o.m||''),c:o.c+1,d:iso()}}
   S.today.ws[w]=1;S.today.n=Object.keys(S.today.ws).length;
   if(ms&&ok&&kind!=='card'){S.today.ms=S.today.ms||{};S.today.ms[w]=1;S.today.mn=Object.keys(S.today.ms).length}
-  if((S.today.mn||0)>=GOAL&&!S.today.done){S.today.done=1;S.xp=(S.xp||0)+30;setTimeout(()=>{sfx('done');toast('🎯 오늘의 미션 완료! +30XP',2200)},1400)}
+  if((S.today.mn||0)>=GOAL&&!S.today.done){S.today.done=1;S.xp=(S.xp||0)+30;S.today.xp=(S.today.xp||0)+30;setTimeout(()=>{sfx('done');toast('🎯 오늘의 미션 완료! +30XP',2200)},1400)}
   if(S.last!==t){const y=new Date();y.setDate(y.getDate()-1);const ys=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();S.streak=S.last===ys?S.streak+1:1;S.last=t}
-  save();
+  save();sync();
 }
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 function pick(n,only){ // weakest boxes first, random within box
   const all=shuffle(only===true?S.custom:only?S.custom.filter(c=>gname(c)===only):words());all.sort((a,b)=>(due(b.w)-due(a.w))||(box(a.w)-box(b.w)));return shuffle(all.slice(0,n));
+}
+const iso=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function payload(){
+  const C=S.cfg||{},t=day(),T=S.today.d===t?S.today:{},all=BASE.concat(HARD,S.custom);
+  return{token:C.token,kid:C.kid||'',date:iso(),
+    sum:{words:T.n||0,tries:T.tr||0,right:T.ok||0,xpToday:T.xp||0,mission:T.done?1:0,missionCount:T.mn||0,xp:S.xp||0,level:lv(S.xp),title:ttl(lv(S.xp)).replace(/^\S+\s/,''),streak:S.streak||0,known:all.filter(x=>box(x.w)>=4).length,total:all.length},
+    wrong:Object.entries(S.wrong||{}).sort((a,b)=>b[1].c-a[1].c).slice(0,300).map(([w,o])=>({w,m:o.m,c:o.c,d:o.d,box:box(w)}))};
+}
+function doSync(){
+  const C=S.cfg;if(!C||!C.url||!C.token||!navigator.onLine)return;
+  try{fetch(C.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload()),keepalive:true}).then(()=>{S.dirty=false;S.lastSync=Date.now();save()}).catch(()=>{})}catch(e){}
+}
+function sync(now){
+  const C=S.cfg;if(!C||!C.url||!C.token)return;
+  S.dirty=true;clearTimeout(sync.t);sync.t=setTimeout(doSync,now?300:5000);
+}
+try{
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&S.dirty)doSync()});
+  window.addEventListener('online',()=>{if(S.dirty)doSync()});
+}catch(e){}
+function cfgRead(){return{kid:$('#c_k').value.trim(),url:$('#c_u').value.trim(),token:$('#c_t').value.trim(),pin:$('#c_p').value.trim()}}
+function cfgMsg(t){$('#cm').textContent=t}
+function cfgSave(){const c=cfgRead();if(!c.url||!c.token){cfgMsg('URL과 비밀 코드를 모두 넣어주세요.');return false}S.cfg=c;save();cfgMsg('저장했어요!');return true}
+function cfgTest(){
+  const c=cfgRead();if(!c.url||!c.token){cfgMsg('URL과 비밀 코드를 먼저 넣어주세요.');return}
+  cfgMsg('확인 중…');
+  fetch(c.url+(c.url.indexOf('?')<0?'?':'&')+'token='+encodeURIComponent(c.token)).then(r=>r.json()).then(j=>cfgMsg((j.ok?'✅ ':'❌ ')+j.msg)).catch(()=>cfgMsg('❌ 연결하지 못했어요. URL(…/exec)과 배포 설정(액세스: 모든 사용자)을 확인해 주세요.'));
+}
+function cfgSend(){if(!cfgSave())return;S.dirty=true;doSync();cfgMsg('전송을 요청했어요. 구글 시트를 새로고침해서 확인해 주세요.')}
+function cfgClear(){if(confirm('시트 연결을 해제할까요? (폰의 학습 기록은 그대로 남아요)')){S.cfg=null;save();settings()}}
+function settings(){
+  const C=S.cfg||{};
+  if(C.pin){const p=prompt('부모 비밀번호를 입력하세요');if(p!==C.pin)return}
+  const last=S.lastSync?new Date(S.lastSync).toLocaleString('ko-KR'):'아직 없음';
+  const f='font-size:16px;text-align:left;margin-bottom:10px';
+  app.innerHTML=`<div class="top"><button class="back" onclick="home()">← 처음으로</button></div><h1>부모 설정</h1><p class="sub">학습 기록을 부모님 구글 시트로 보내요.</p>
+  <label class="sub">아이 이름</label><input id="c_k" value="${esc(C.kid||'')}" placeholder="예: 소은" style="${f}">
+  <label class="sub">웹 앱 URL (끝이 /exec)</label><input id="c_u" value="${esc(C.url||'')}" placeholder="https://script.google.com/macros/s/…/exec" autocapitalize="none" style="${f};font-size:13px">
+  <label class="sub">비밀 코드</label><input id="c_t" value="${esc(C.token||'')}" autocapitalize="none" style="${f}">
+  <label class="sub">부모 비밀번호 (설정 화면을 잠가요 · 비워도 돼요)</label><input id="c_p" value="${esc(C.pin||'')}" inputmode="numeric" style="${f}">
+  <button class="go" onclick="cfgSave()">저장하기</button><button class="go" style="background:var(--mint)" onclick="cfgTest()">연결 테스트</button><button class="go" style="background:var(--card)" onclick="cfgSend()">지금 전송하기</button>
+  <div class="msg" id="cm" style="font-size:16px"></div><p class="sub" style="text-align:center">마지막 전송 요청: ${last}</p><div style="text-align:center"><button class="link" onclick="cfgClear()">연결 해제</button></div>`;
 }
 function home(){
   applyTheme();
@@ -117,10 +162,11 @@ function home(){
   <button class="big" onclick="quiz()">🎯 뜻 맞히기 퀴즈<small>발음 듣고 4개 중 고르기 · 전부 맞히면 보너스!</small></button>
   <button class="big" onclick="spell()">✏️ 스펠링 쓰기<small>소리를 듣고 직접 써보기 · 전부 맞히면 보너스!</small></button>
   <button class="big" onclick="addw()">➕ 내 단어 추가<small>학원·교과서 단어 넣기</small></button>
-  <div style="text-align:center"><button class="link" onclick="toggleMute()">${S.mute?'🔇 효과음 꺼짐 (누르면 켜짐)':'🔊 효과음 켜짐 (누르면 꺼짐)'}</button></div>`;
+  <div style="text-align:center"><button class="link" onclick="toggleMute()">${S.mute?'🔇 효과음 꺼짐 (누르면 켜짐)':'🔊 효과음 켜짐 (누르면 꺼짐)'}</button></div>
+  <div style="text-align:center"><button class="link" onclick="settings()">⚙️ 부모 설정</button></div>`;
 }
 const head=(t,i,n,x)=>`<div class="top"><button class="back" onclick="home()">← 처음으로</button><span class="count">${t} ${i+1}/${n} ${x||''}</span></div>`;
-function done(msg,sub){app.innerHTML=`<div class="end"><div class="word">🎉</div><h1>${msg}</h1><p class="sub">${sub||'틀린 단어는 다음에 더 자주 나와요.'}</p><button class="go" onclick="home()">처음으로</button></div>`}
+function done(msg,sub){sync(true);app.innerHTML=`<div class="end"><div class="word">🎉</div><h1>${msg}</h1><p class="sub">${sub||'틀린 단어는 다음에 더 자주 나와요.'}</p><button class="go" onclick="home()">처음으로</button></div>`}
 function cards(only){
   if(only&&!S.custom.length){alert('아직 추가한 단어가 없어요. "내 단어 추가"에서 먼저 넣어주세요.');return}
   const q=pick(10,only);let i=0,flip=false;
@@ -229,6 +275,7 @@ function addw(){
   window.gdel=gi=>{const [g,ks]=groups()[gi];if(confirm('"'+g+'" 그룹의 단어 '+ks.length+'개를 모두 지울까요?')){S.custom=S.custom.filter(c=>gname(c)!==g);save();refresh()}};
 }
 home();
+if(S.dirty)setTimeout(doSync,1500);
 try{if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 </script>
 </body>
