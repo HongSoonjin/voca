@@ -175,17 +175,39 @@ const head=(t,i,n,x)=>`<div class="top"><button class="back" onclick="home()">�
 function done(msg,sub){sync(true);app.innerHTML=`<div class="end"><div class="word">🎉</div><h1>${msg}</h1><p class="sub">${sub||'틀린 단어는 다음에 더 자주 나와요.'}</p><button class="go" onclick="home()">처음으로</button></div>`}
 const SR=()=>window.SpeechRecognition||window.webkitSpeechRecognition;
 const norm=t=>String(t).toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+function setLive(t){const e=document.querySelector('#pm')||document.querySelector('#qm')||document.querySelector('#sp');if(e){e.style.color='var(--ink)';e.textContent='🎙️ 들리는 소리: "'+t+'"'}}
 function listen(cb){
   const R=SR();if(!R){cb({err:'unsupported'});return}
-  let r,got=false;try{r=new R()}catch(e){cb({err:'unsupported'});return}
-  r.lang='en-US';r.interimResults=false;r.maxAlternatives=5;r.continuous=false;
-  r.onresult=e=>{got=true;const a=[];for(const x of e.results[0])a.push(x.transcript);cb({alts:a})};
-  r.onerror=e=>{if(!got){got=true;cb({err:e.error})}};
-  r.onend=()=>{if(!got){got=true;cb({err:'no-speech'})}};
+  let done=false,retried=false;
+  const fin=o=>{if(!done){done=true;cb(o)}};
+  const go=()=>{
+    let r,last='',got=false;
+    try{r=new R()}catch(e){fin({err:'unsupported'});return}
+    r.lang='en-US';r.interimResults=true;r.maxAlternatives=5;r.continuous=false;
+    r.onresult=e=>{
+      const x=e.results[e.results.length-1];
+      if(x.isFinal){got=true;const a=[];for(const y of x)a.push(y.transcript);fin({alts:a})}
+      else{last=x[0].transcript;setLive(last)}
+    };
+    r.onerror=e=>{
+      if(got||done)return;got=true;
+      if(e.error==='aborted'&&!retried){retried=true;setTimeout(go,600);return}
+      if(last&&(e.error==='aborted'||e.error==='no-speech')){fin({alts:[last]});return}
+      fin({err:e.error});
+    };
+    r.onend=()=>{if(!got&&!done){got=true;if(last)fin({alts:[last]});else fin({err:'no-speech'})}};
+    try{r.start()}catch(e){fin({err:'busy'})}
+  };
+  // 소리(TTS)가 끝난 뒤에 마이크를 켜야 안드로이드에서 끊기지 않아요
   try{speechSynthesis.cancel()}catch(e){}
-  try{r.start()}catch(e){cb({err:'busy'})}
+  let waited=0;
+  const tick=()=>{
+    let sp=false;try{sp=speechSynthesis.speaking}catch(e){}
+    if(sp&&waited<1500){waited+=100;setTimeout(tick,100)}else setTimeout(go,350);
+  };
+  tick();
 }
-const sayErr=e=>({'not-allowed':'🎤 마이크 권한을 허용해 주세요. (주소창 왼쪽 자물쇠 → 권한)','service-not-allowed':'🎤 마이크 권한을 허용해 주세요.','network':'📶 인터넷 연결을 확인해 주세요.','no-speech':'소리가 안 들렸어요. 다시 눌러서 말해 보세요.','audio-capture':'🎤 마이크를 찾지 못했어요.','unsupported':'이 브라우저는 음성 인식이 안 돼요. 크롬으로 열어 주세요.'}[e]||'다시 한 번 말해 보세요. ('+e+')');
+const sayErr=e=>({'not-allowed':'🎤 마이크 권한을 허용해 주세요. (주소창 왼쪽 자물쇠 → 권한)','service-not-allowed':'🎤 마이크 권한을 허용해 주세요.','network':'📶 인터넷 연결을 확인해 주세요.','no-speech':'소리가 안 들렸어요. 다시 눌러서 말해 보세요.','audio-capture':'🎤 마이크를 찾지 못했어요.','unsupported':'이 브라우저는 음성 인식이 안 돼요. 크롬으로 열어 주세요.','aborted':'마이크가 끊겼어요. 다시 눌러 보세요. 계속되면 홈 화면 아이콘 대신 크롬 주소창으로 열어 보세요.'}[e]||'다시 한 번 말해 보세요. ('+e+')');
 function checkSay(w,res){
   if(res.err)return{t:sayErr(res.err),ok:false};
   if(res.alts.map(norm).includes(norm(w))){
