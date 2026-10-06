@@ -165,7 +165,7 @@ function home(){
   <button class="big" onclick="folders()">⭐ 내 단어 공부<small>폴더별로 골라서 공부 (${S.custom.length}개)</small></button>
   <button class="big" onclick="quiz()">🎯 뜻 맞히기 퀴즈<small>발음 듣고 4개 중 고르기 · 전부 맞히면 보너스!</small></button>
   <button class="big" onclick="spell()">✏️ 스펠링 쓰기<small>소리를 듣고 직접 써보기 · 전부 맞히면 보너스!</small></button>
-  <button class="big" onclick="pronounce()">🎤 발음 연습<small>듣고 따라 말하기 · 정확하면 XP</small></button>
+  <button class="big" onclick="pronounce(true)">🎤 발음 연습<small>내 단어로 듣고 따라 말하기 (${S.custom.length}개) · 정확하면 XP</small></button>
   <button class="big" onclick="addw()">➕ 내 단어 추가<small>학원·교과서 단어 넣기</small></button>
   <div style="text-align:center"><button class="link" onclick="toggleMute()">${S.mute?'🔇 효과음 꺼짐 (누르면 켜짐)':'🔊 효과음 켜짐 (누르면 꺼짐)'}</button></div>
   <div style="text-align:center"><button class="link" onclick="toggleQs()">${S.qs===false?'🎤 퀴즈 따라 말하기: 꺼짐 (누르면 켜짐)':'🎤 퀴즈 따라 말하기: 켜짐 (누르면 꺼짐)'}</button></div>
@@ -250,7 +250,9 @@ function cards(only){
   show();
 }
 function pronounce(only){
+  only=only||true;
   if(!SR()){alert('이 브라우저는 음성 인식이 안 돼요. 크롬으로 열어 주세요.');return}
+  if(!S.custom.length){alert('발음 연습은 "내 단어"로만 해요. 아직 추가한 단어가 없어요. "내 단어 추가"에서 먼저 넣어주세요.');return}
   const q=pick(10,only);let i=0,ok=0,got=false,tok={};const x0=S.xp||0;
   const show=()=>{
     if(i>=q.length){sfx('done');return done('발음 연습 끝! 🎤','정확하게 말한 단어 '+ok+'/'+q.length+'개 · 획득 XP '+((S.xp||0)-x0))}
