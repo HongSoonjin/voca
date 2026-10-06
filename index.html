@@ -51,6 +51,7 @@ textarea{font-size:16px;text-align:left;height:140px}
 .chips{display:flex;gap:8px;margin:0 0 16px}.chip{flex:1;padding:10px;border-radius:14px;border:2px solid var(--line);background:var(--card);font-size:16px}.chip.on{background:var(--sun);border-color:var(--ink);color:#1F2A44}
 .toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 20px;border-radius:22px;font-size:20px;z-index:9;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .wtag{background:var(--coral);color:#fff;border-radius:14px;padding:4px 12px;font-size:14px}
+.mic{display:block;width:100%;margin-top:12px;padding:14px;border-radius:16px;border:2px solid var(--ink);background:var(--card);font-size:18px}
 .link{background:none;border:0;color:var(--mute);text-decoration:underline;margin-top:8px;font-size:15px}
 </style>
 </head>
@@ -159,7 +160,7 @@ function home(){
   <div class="stats"><div class="stat"><b>${S.last===t||S.streak?S.streak:0}일</b><span>연속 학습</span></div><div class="stat"><b>${n}</b><span>오늘 푼 단어</span></div><div class="stat"><b>${known}/${tot}</b><span>외운 단어</span></div></div>
   <div class="bar"><i style="width:${known/tot*100}%"></i></div>
   <div class="chips">${[['all','전체'],['1','기본'],['2','심화']].map(([v,t])=>`<button class="chip${S.lv===v?' on':''}" onclick="setLv('${v}')">${t}</button>`).join('')}</div>
-  <button class="big" onclick="cards()">🃏 단어 카드<small>듣고, 뒤집고, 알아요/몰라요</small></button>
+  <button class="big" onclick="cards()">🃏 단어 카드<small>듣고, 따라 말하고, 뒤집고, 알아요/몰라요</small></button>
   <button class="big" onclick="folders()">⭐ 내 단어 공부<small>폴더별로 골라서 공부 (${S.custom.length}개)</small></button>
   <button class="big" onclick="quiz()">🎯 뜻 맞히기 퀴즈<small>발음 듣고 4개 중 고르기 · 전부 맞히면 보너스!</small></button>
   <button class="big" onclick="spell()">✏️ 스펠링 쓰기<small>소리를 듣고 직접 써보기 · 전부 맞히면 보너스!</small></button>
@@ -169,17 +170,45 @@ function home(){
 }
 const head=(t,i,n,x)=>`<div class="top"><button class="back" onclick="home()">← 처음으로</button><span class="count">${t} ${i+1}/${n} ${x||''}</span></div>`;
 function done(msg,sub){sync(true);app.innerHTML=`<div class="end"><div class="word">🎉</div><h1>${msg}</h1><p class="sub">${sub||'틀린 단어는 다음에 더 자주 나와요.'}</p><button class="go" onclick="home()">처음으로</button></div>`}
+const SR=()=>window.SpeechRecognition||window.webkitSpeechRecognition;
+const norm=t=>String(t).toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+function listen(cb){
+  const R=SR();if(!R){cb({err:'unsupported'});return}
+  let r,got=false;try{r=new R()}catch(e){cb({err:'unsupported'});return}
+  r.lang='en-US';r.interimResults=false;r.maxAlternatives=5;r.continuous=false;
+  r.onresult=e=>{got=true;const a=[];for(const x of e.results[0])a.push(x.transcript);cb({alts:a})};
+  r.onerror=e=>{if(!got){got=true;cb({err:e.error})}};
+  r.onend=()=>{if(!got){got=true;cb({err:'no-speech'})}};
+  try{speechSynthesis.cancel()}catch(e){}
+  try{r.start()}catch(e){cb({err:'busy'})}
+}
+const sayErr=e=>({'not-allowed':'🎤 마이크 권한을 허용해 주세요. (주소창 왼쪽 자물쇠 → 권한)','service-not-allowed':'🎤 마이크 권한을 허용해 주세요.','network':'📶 인터넷 연결을 확인해 주세요.','no-speech':'소리가 안 들렸어요. 다시 눌러서 말해 보세요.','audio-capture':'🎤 마이크를 찾지 못했어요.','unsupported':'이 브라우저는 음성 인식이 안 돼요. 크롬으로 열어 주세요.'}[e]||'다시 한 번 말해 보세요. ('+e+')');
 function cards(only){
   if(only&&!S.custom.length){alert('아직 추가한 단어가 없어요. "내 단어 추가"에서 먼저 넣어주세요.');return}
-  const q=pick(10,only);let i=0,flip=false;
+  const q=pick(10,only);let i=0,flip=false,sp={i:-1,t:'',ok:false};
   const show=()=>{
     if(i>=q.length)return done('카드 끝!','퀴즈·스펠링에서 맞혀야 "외운 단어"가 돼요.');
     const c=q[i];
     app.innerHTML=head('카드',i,q.length)+`<div class="flash" onclick="flipC()"><div class="word">${c.w}</div><button class="spk" onclick="event.stopPropagation();speak('${c.w}')">🔊</button><div class="mean" id="m">${flip?c.m:''}</div><div class="hint">${flip?'':'카드를 눌러 뜻 보기'}</div></div>
-    <div class="row"><button class="no" onclick="ans(false)">몰라요 😵</button><button class="yes" onclick="ans(true)">알아요 😎</button></div>`;
+    ${SR()?`<button class="mic" onclick="sayIt()">🎤 따라 말하기</button>`:''}<div class="msg" id="sp" style="font-size:17px;color:${sp.ok?'var(--mint)':'var(--coral)'}">${sp.i===i?esc(sp.t):''}</div>
+    <div class="row" style="margin-top:4px"><button class="no" onclick="ans(false)">몰라요 😵</button><button class="yes" onclick="ans(true)">알아요 😎</button></div>`;
     if(!flip)speak(c.w);
   };
   window.flipC=()=>{flip=true;show()};
+  window.sayIt=()=>{
+    const c=q[i],m=$('#sp'),k=i;
+    m.style.color='var(--ink)';m.textContent='🎙️ 듣는 중… 지금 말해 보세요!';
+    listen(res=>{
+      if(k!==i)return;
+      if(res.err){sp={i:k,t:sayErr(res.err),ok:false}}
+      else if(res.alts.map(norm).includes(norm(c.w))){
+        sfx('combo');let extra='';
+        if(!(S.today.d===day()&&S.today.sp&&S.today.sp[c.w])){gain(5);S.today.sp=S.today.sp||{};S.today.sp[c.w]=1;save();extra=' +5 XP'}
+        sp={i:k,t:'✅ 좋아요! 발음이 정확해요.'+extra,ok:true};
+      }else{sfx('bad');sp={i:k,t:'❌ 이렇게 들렸어요: "'+res.alts[0]+'" → 정답은 '+c.w+'. 다시 말해 보세요!',ok:false}}
+      const e=$('#sp');if(e){e.style.color=sp.ok?'var(--mint)':'var(--coral)';e.textContent=sp.t}
+    });
+  };
   window.ans=ok=>{gain(ok?3:1);sfx(ok?'ok':'bad');mark(q[i].w,ok,'card',!!only);i++;flip=false;show()};
   show();
 }
