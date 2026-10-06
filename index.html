@@ -50,6 +50,7 @@ textarea{font-size:16px;text-align:left;height:140px}
 .end{text-align:center;padding:40px 10px}.end .word{font-size:34px}
 .chips{display:flex;gap:8px;margin:0 0 16px}.chip{flex:1;padding:10px;border-radius:14px;border:2px solid var(--line);background:var(--card);font-size:16px}.chip.on{background:var(--sun);border-color:var(--ink);color:#1F2A44}
 .toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 20px;border-radius:22px;font-size:20px;z-index:9;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.wtag{background:var(--coral);color:#fff;border-radius:14px;padding:4px 12px;font-size:14px}
 .link{background:none;border:0;color:var(--mute);text-decoration:underline;margin-top:8px;font-size:15px}
 </style>
 </head>
@@ -80,6 +81,7 @@ let AC;
 function sfx(k){if(S.mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const seq={ok:[[660,0,.12],[880,.1,.18]],combo:[[660,0,.1],[880,.09,.1],[1100,.18,.2]],bad:[[260,0,.12],[200,.12,.22]],done:[[523,0,.12],[659,.12,.12],[784,.24,.12],[1047,.36,.3]]}[k];const t0=AC.currentTime;seq.forEach(([f,t,d])=>{const o=AC.createOscillator(),g=AC.createGain();o.type=k==='bad'?'triangle':'sine';o.frequency.value=f;g.gain.setValueAtTime(.001,t0+t);g.gain.exponentialRampToValueAtTime(.18,t0+t+.02);g.gain.exponentialRampToValueAtTime(.001,t0+t+d);o.connect(g);g.connect(AC.destination);o.start(t0+t);o.stop(t0+t+d+.05)})}catch(e){}}
 function toast(t,ms){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.className='toast';document.body.appendChild(e)}e.textContent=t;e.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>{e.style.opacity=0},ms||1100)}
 function gain(p){const b=lv(S.xp);S.xp=(S.xp||0)+p;{const t=day();if(S.today.d!==t||!S.today.ws)S.today={d:t,n:0,ws:{}};S.today.xp=(S.today.xp||0)+p}applyTheme();if(lv(S.xp)>b)setTimeout(()=>{sfx('done');toast(ti(lv(S.xp))>ti(b)?'🎊 새 호칭! '+ttl(lv(S.xp)):'🎉 레벨 업! Lv.'+lv(S.xp),2400)},900)}
+const wtag=w=>{const o=S.wrong&&S.wrong[w];return o&&box(w)<4?`<div class="wtag">❗ 틀렸던 단어 · ${o.c}번 틀림</div>`:''};
 function newGame(){return{combo:0,best:0,score:0,right:0,wrong:0,bonus:0,
   ans(ok){if(ok){this.right++;this.combo++;this.best=Math.max(this.best,this.combo);const p=10+Math.min(this.combo-1,5)*2;this.score+=p;gain(p);sfx(this.combo>=3?'combo':'ok');toast(this.combo>=2?'🔥 '+this.combo+'콤보! +'+p:pr(PR_OK)+' +'+p)}else{this.wrong++;this.combo=0;sfx('bad');toast(pr(PR_NO))}},
   tag(){return '· ⭐'+this.score+(this.combo>1?' 🔥'+this.combo:'')},
@@ -186,7 +188,7 @@ function quiz(only){
   const show=()=>{
     if(i>=q.length){const pf=G.perfect(q.length);sfx('done');return done(`${ok}/${q.length} 정답!${pf?' 🌟 퍼펙트':''}`,G.end())}
     const c=q[i],opts=shuffle([c].concat(shuffle(words().filter(x=>x.w!==c.w)).slice(0,3)));
-    app.innerHTML=head('퀴즈',i,q.length,G.tag())+`<div class="flash"><div class="word">${c.w}</div><button class="spk" onclick="speak('${c.w}')">🔊</button></div>`+opts.map((o,k)=>`<button class="opt" onclick="pk(${k},this)">${o.m}</button>`).join('');
+    app.innerHTML=head('퀴즈',i,q.length,G.tag())+`<div class="flash">${wtag(c.w)}<div class="word">${c.w}</div><button class="spk" onclick="speak('${c.w}')">🔊</button></div>`+opts.map((o,k)=>`<button class="opt" onclick="pk(${k},this)">${o.m}</button>`).join('');
     window.pk=(k,el)=>{
       const right=opts[k].w===c.w;
       document.querySelectorAll('.opt').forEach((b,j)=>{b.disabled=true;if(opts[j].w===c.w)b.classList.add('ok')});
