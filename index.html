@@ -176,10 +176,17 @@ function done(msg,sub){sync(true);app.innerHTML=`<div class="end"><div class="wo
 const SR=()=>window.SpeechRecognition||window.webkitSpeechRecognition;
 const norm=t=>String(t).toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
 function setLive(t){const e=document.querySelector('#pm')||document.querySelector('#qm')||document.querySelector('#sp');if(e){e.style.color='var(--ink)';e.textContent='🎙️ 들리는 소리: "'+t+'"'}}
+function offerKb(){
+  if(document.querySelector('#kbx'))return;
+  const m=document.querySelector('#pm')||document.querySelector('#qm')||document.querySelector('#sp');if(!m)return;
+  m.insertAdjacentHTML('afterend','<div id="kbw" style="margin:6px 0 10px;text-align:center"><div class="sub" style="margin:0 0 6px">마이크 버튼이 안 되면 ⌨️ 키보드의 🎤로 말해 보세요 (XP는 없어요)</div><input id="kbx" placeholder="키보드의 🎤를 눌러 말해 보세요" autocapitalize="none" autocomplete="off" spellcheck="false" style="font-size:18px" onkeydown="if(event.key===\'Enter\')kbGo()"><button class="go" style="margin-top:8px" onclick="kbGo()">확인</button></div>');
+}
+window.kbGo=()=>{const e=document.querySelector('#kbx');const v=e&&e.value.trim();if(v&&window.__lastCb)window.__lastCb({alts:[v],kb:true})};
 function listen(cb){
   const R=SR();if(!R){cb({err:'unsupported'});return}
+  window.__lastCb=cb;
   let done=false,retried=false;
-  const fin=o=>{if(!done){done=true;cb(o)}};
+  const fin=o=>{if(!done){done=true;cb(o);if(['aborted','not-allowed','service-not-allowed','audio-capture'].includes(o.err))offerKb()}};
   const go=()=>{
     let r,last='',got=false;
     try{r=new R()}catch(e){fin({err:'unsupported'});return}
@@ -212,6 +219,7 @@ function checkSay(w,res){
   if(res.err)return{t:sayErr(res.err),ok:false};
   if(res.alts.map(norm).includes(norm(w))){
     sfx('combo');let x='';
+    if(res.kb)return{t:'✅ 맞아요! (키보드 입력이라 XP는 없어요)',ok:true,kb:true};
     if(!(S.today.d===day()&&S.today.sp&&S.today.sp[w])){gain(5);S.today.sp=S.today.sp||{};S.today.sp[w]=1;save();x=' +5 XP'}
     return{t:'✅ 좋아요! 발음이 정확해요.'+x,ok:true};
   }
@@ -258,7 +266,7 @@ function pronounce(only){
       const mm=$('#pm');if(!mm||tok!==t)return;
       const r=checkSay(c.w,res);
       mm.style.color=r.ok?'var(--mint)':'var(--coral)';mm.textContent=r.t;
-      if(r.ok){if(!got){got=true;ok++}const n=$('#pn');if(n)n.textContent='다음 ▶';clearTimeout(window.__pt);window.__pt=setTimeout(window.pNext,1500)}
+      if(r.ok){if(!got&&!r.kb){got=true;ok++}const n=$('#pn');if(n)n.textContent='다음 ▶';clearTimeout(window.__pt);window.__pt=setTimeout(window.pNext,1500)}
     });
   };
   show();
