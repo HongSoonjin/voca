@@ -61,7 +61,7 @@ textarea{font-size:16px;text-align:left;height:140px}
 const BASE=`school 학교|teacher 선생님|student 학생|classroom 교실|homework 숙제|library 도서관|lesson 수업|question 질문|answer 대답|remember 기억하다|forget 잊다|study 공부하다|learn 배우다|practice 연습하다|understand 이해하다|important 중요한|difficult 어려운|easy 쉬운|different 다른|same 같은|family 가족|friend 친구|neighbor 이웃|brother 형제|sister 자매|parent 부모|grandmother 할머니|breakfast 아침 식사|lunch 점심|dinner 저녁 식사|vegetable 채소|fruit 과일|delicious 맛있는|hungry 배고픈|thirsty 목마른|weather 날씨|sunny 화창한|rainy 비 오는|cloudy 흐린|season 계절|winter 겨울|summer 여름|morning 아침|evening 저녁|yesterday 어제|tomorrow 내일|always 항상|sometimes 가끔|never 결코 ~않다|hobby 취미|music 음악|movie 영화|sport 운동|soccer 축구|swim 수영하다|dance 춤추다|travel 여행하다|airport 공항|station 역|museum 박물관|hospital 병원|restaurant 식당|market 시장|street 거리|beautiful 아름다운|dangerous 위험한|safe 안전한|healthy 건강한|happy 행복한|angry 화난|tired 피곤한|excited 신난|worried 걱정하는|kind 친절한|honest 정직한|brave 용감한|shy 수줍은|smart 똑똑한|borrow 빌리다|lend 빌려주다|choose 고르다|decide 결정하다|invite 초대하다|visit 방문하다|enjoy 즐기다|believe 믿다|wait 기다리다|help 돕다`.split('|').map(s=>{const i=s.indexOf(' ');return{w:s.slice(0,i),m:s.slice(i+1)}});
 const HARD=`achieve 달성하다|advantage 장점|advice 조언|afford ~할 여유가 있다|ancient 고대의|appear 나타나다|arrange 정리하다|attend 참석하다|average 평균|avoid 피하다|behavior 행동|benefit 이익|celebrate 기념하다|century 세기|challenge 도전|cheerful 쾌활한|communicate 의사소통하다|compare 비교하다|complain 불평하다|complete 완성하다|concentrate 집중하다|condition 상태|confident 자신 있는|consider 고려하다|contain 포함하다|contest 대회|courage 용기|creative 창의적인|culture 문화|customer 고객|damage 손해|decorate 장식하다|describe 묘사하다|destroy 파괴하다|develop 발전시키다|discover 발견하다|distance 거리|divide 나누다|donate 기부하다|effort 노력|elderly 나이 든|empty 빈|encourage 격려하다|energy 에너지|enough 충분한|environment 환경|equal 동등한|escape 탈출하다|event 행사|exact 정확한|examine 검사하다|experience 경험|explain 설명하다|express 표현하다|familiar 익숙한|festival 축제|foreign 외국의|freedom 자유|garbage 쓰레기|generous 관대한|gentle 온화한|grateful 감사하는|guess 추측하다|habit 습관|harmony 조화|huge 거대한|imagine 상상하다|improve 향상시키다|include 포함하다|increase 증가하다|information 정보|invent 발명하다|journey 여정|knowledge 지식|language 언어|local 지역의|lonely 외로운|manage 관리하다|mention 언급하다|mistake 실수|modern 현대의|necessary 필요한|offer 제안하다|opinion 의견|ordinary 평범한|painful 고통스러운|patient 참을성 있는|perform 공연하다|permit 허락하다|plenty 많음|polite 예의 바른|popular 인기 있는|position 위치|possible 가능한|prepare 준비하다|prevent 막다|private 사적인|produce 생산하다|promise 약속하다|protect 보호하다|proud 자랑스러운|provide 제공하다|public 공공의|recycle 재활용하다|reduce 줄이다|refuse 거절하다|region 지역|relax 휴식하다|rely 의존하다|remain 남다|repeat 반복하다|require 요구하다|rescue 구조하다|respect 존경하다|respond 대답하다|responsible 책임감 있는|result 결과|reward 보상|risk 위험|role 역할|satisfy 만족시키다|scared 무서워하는|serious 심각한|shelter 대피소|similar 비슷한|situation 상황|society 사회|solve 해결하다|spread 퍼지다|stranger 낯선 사람|succeed 성공하다|suggest 제안하다|support 지지하다|surprise 놀라게 하다|survive 살아남다|tradition 전통|useful 유용한|volunteer 자원봉사자|wisdom 지혜|wonder 궁금해하다|worth ~할 가치가 있는`.split('|').map(s=>{const i=s.indexOf(' ');return{w:s.slice(0,i),m:s.slice(i+1),l:2}});
 const $=s=>document.querySelector(s),app=$('#app');
-let S={wrong:{},cfg:null,dirty:false,lastSync:0,xp:0,mute:false,lv:'all',seen:{},box:{},custom:[],streak:0,last:'',today:{d:'',n:0}};
+let S={qs:true,wrong:{},cfg:null,dirty:false,lastSync:0,xp:0,mute:false,lv:'all',seen:{},box:{},custom:[],streak:0,last:'',today:{d:'',n:0}};
 try{const r=localStorage.getItem('vocaS');if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
 const save=()=>{try{localStorage.setItem('vocaS',JSON.stringify(S))}catch(e){}};
 const day=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
@@ -88,6 +88,7 @@ function newGame(){return{combo:0,best:0,score:0,right:0,wrong:0,bonus:0,
   tag(){return '· ⭐'+this.score+(this.combo>1?' 🔥'+this.combo:'')},
   perfect(n){if(n>=5&&this.wrong===0&&this.right===n){this.bonus=n*PERFECT;gain(this.bonus);save();toast('🌟 퍼펙트! 보너스 +'+this.bonus+' XP',2400);return this.bonus}return 0},
   end(){return '점수 '+this.score+'점 · 최고 콤보 '+this.best+' 🔥'+(this.bonus?' · 🌟 보너스 +'+this.bonus+' XP':'')}}}
+window.toggleQs=()=>{S.qs=S.qs===false;save();home()};
 window.toggleMute=()=>{S.mute=!S.mute;save();home()};
 const INT=[0,0,1,3,7,14];
 const due=w=>{const b=box(w);return b<2||Date.now()-(S.seen[w]||0)>=INT[b]*864e5};
@@ -164,8 +165,10 @@ function home(){
   <button class="big" onclick="folders()">⭐ 내 단어 공부<small>폴더별로 골라서 공부 (${S.custom.length}개)</small></button>
   <button class="big" onclick="quiz()">🎯 뜻 맞히기 퀴즈<small>발음 듣고 4개 중 고르기 · 전부 맞히면 보너스!</small></button>
   <button class="big" onclick="spell()">✏️ 스펠링 쓰기<small>소리를 듣고 직접 써보기 · 전부 맞히면 보너스!</small></button>
+  <button class="big" onclick="pronounce()">🎤 발음 연습<small>듣고 따라 말하기 · 정확하면 XP</small></button>
   <button class="big" onclick="addw()">➕ 내 단어 추가<small>학원·교과서 단어 넣기</small></button>
   <div style="text-align:center"><button class="link" onclick="toggleMute()">${S.mute?'🔇 효과음 꺼짐 (누르면 켜짐)':'🔊 효과음 켜짐 (누르면 꺼짐)'}</button></div>
+  <div style="text-align:center"><button class="link" onclick="toggleQs()">${S.qs===false?'🎤 퀴즈 따라 말하기: 꺼짐 (누르면 켜짐)':'🎤 퀴즈 따라 말하기: 켜짐 (누르면 꺼짐)'}</button></div>
   <div style="text-align:center"><button class="link" onclick="settings()">⚙️ 부모 설정</button></div>`;
 }
 const head=(t,i,n,x)=>`<div class="top"><button class="back" onclick="home()">← 처음으로</button><span class="count">${t} ${i+1}/${n} ${x||''}</span></div>`;
@@ -216,6 +219,28 @@ function cards(only){
   window.ans=ok=>{gain(ok?3:1);sfx(ok?'ok':'bad');mark(q[i].w,ok,'card',!!only);i++;flip=false;show()};
   show();
 }
+function pronounce(only){
+  if(!SR()){alert('이 브라우저는 음성 인식이 안 돼요. 크롬으로 열어 주세요.');return}
+  const q=pick(10,only);let i=0,ok=0,got=false,tok={};const x0=S.xp||0;
+  const show=()=>{
+    if(i>=q.length){sfx('done');return done('발음 연습 끝! 🎤','정확하게 말한 단어 '+ok+'/'+q.length+'개 · 획득 XP '+((S.xp||0)-x0))}
+    const c=q[i];got=false;tok={};
+    app.innerHTML=head('발음',i,q.length)+`<div class="flash"><div class="word">${c.w}</div><button class="spk" onclick="speak('${c.w}')">🔊</button><div class="mean" style="font-size:24px">${c.m}</div><div class="hint">🔊를 듣고 🎤를 눌러 따라 말해요</div></div><button class="mic" onclick="pSay()">🎤 따라 말하기</button><div class="msg" id="pm" style="font-size:17px"></div><div style="text-align:center"><button class="link" id="pn" onclick="pNext()">건너뛰기 ▶</button></div>`;
+    speak(c.w);
+  };
+  window.pNext=()=>{clearTimeout(window.__pt);i++;show()};
+  window.pSay=()=>{
+    const c=q[i],m=$('#pm'),t=tok;if(!m)return;
+    m.style.color='var(--ink)';m.textContent='🎙️ 듣는 중… 지금 말해 보세요!';
+    listen(res=>{
+      const mm=$('#pm');if(!mm||tok!==t)return;
+      const r=checkSay(c.w,res);
+      mm.style.color=r.ok?'var(--mint)':'var(--coral)';mm.textContent=r.t;
+      if(r.ok){if(!got){got=true;ok++}const n=$('#pn');if(n)n.textContent='다음 ▶';clearTimeout(window.__pt);window.__pt=setTimeout(window.pNext,1500)}
+    });
+  };
+  show();
+}
 function quiz(only){
   const q=pick(10,only);let i=0,ok=0;const G=newGame();
   const show=()=>{
@@ -227,7 +252,7 @@ function quiz(only){
       document.querySelectorAll('.opt').forEach((b,j)=>{b.disabled=true;if(opts[j].w===c.w)b.classList.add('ok')});
       if(!right)el.classList.add('bad');else ok++;
       G.ans(right);mark(c.w,right,'quiz',!!only);i++;
-      if(right&&SR()){
+      if(right&&SR()&&S.qs!==false){
         const tok={};window.__qtok=tok;
         const next=()=>{clearTimeout(window.__qt);show()};
         window.qnext=next;
@@ -273,10 +298,11 @@ const groups=()=>{const m={};S.custom.forEach((c,k)=>{(m[gname(c)]=m[gname(c)]||
 window.gcards=gi=>cards(groups()[gi][0]);
 window.gquiz=gi=>quiz(groups()[gi][0]);
 window.gspell=gi=>spell(groups()[gi][0]);
+window.gpron=gi=>pronounce(groups()[gi][0]);
 function folders(){
   const gs=groups();
   if(!gs.length){alert('아직 추가한 단어가 없어요. "내 단어 추가"에서 먼저 넣어주세요.');return}
-  app.innerHTML=`<div class="top"><button class="back" onclick="home()">← 처음으로</button></div><h1>내 단어 공부</h1><p class="sub">공부할 폴더를 골라요</p><button class="big" onclick="cards(true)">📚 전체 폴더<small>${S.custom.length}개 단어를 섞어서</small></button>`+gs.map(([g,ks],gi)=>`<div style="margin-bottom:14px"><button class="big" style="margin:0 0 6px" onclick="gcards(${gi})">📁 ${g.replace(/</g,'&lt;')}<small>${ks.length}개 · 카드로 공부</small></button><div style="display:flex;gap:14px;padding-left:6px"><button class="link" style="margin:0" onclick="gquiz(${gi})">🎯 퀴즈</button><button class="link" style="margin:0" onclick="gspell(${gi})">✏️ 쓰기</button></div></div>`).join('');
+  app.innerHTML=`<div class="top"><button class="back" onclick="home()">← 처음으로</button></div><h1>내 단어 공부</h1><p class="sub">공부할 폴더를 골라요</p><button class="big" onclick="cards(true)">📚 전체 폴더<small>${S.custom.length}개 단어를 섞어서</small></button>`+gs.map(([g,ks],gi)=>`<div style="margin-bottom:14px"><button class="big" style="margin:0 0 6px" onclick="gcards(${gi})">📁 ${g.replace(/</g,'&lt;')}<small>${ks.length}개 · 카드로 공부</small></button><div style="display:flex;gap:14px;padding-left:6px"><button class="link" style="margin:0" onclick="gquiz(${gi})">🎯 퀴즈</button><button class="link" style="margin:0" onclick="gspell(${gi})">✏️ 쓰기</button><button class="link" style="margin:0" onclick="gpron(${gi})">🎤 발음</button></div></div>`).join('');
 }
 const OPEN={};
 const refresh=()=>{const e=$('#gl');if(e)e.innerHTML=groupsHtml()};
@@ -284,7 +310,7 @@ function groupsHtml(){
   const gs=groups();
   return `<p class="sub" style="margin-top:18px">추가한 단어 ${S.custom.length}개 · 폴더 ${gs.length}개</p>`+gs.map(([g,ks],gi)=>{
     const o=OPEN[g],nm=g.replace(/</g,'&lt;');
-    return `<div style="margin-bottom:10px"><button class="big" style="margin:0;padding:14px 16px;font-size:19px;display:flex;align-items:center;gap:8px" onclick="tg(${gi})"><span>${o?'📂':'📁'}</span><b style="flex:1;font-weight:normal">${nm}</b><span class="count" style="font-size:15px">${ks.length}개 ${o?'▾':'▸'}</span></button>`+(o?`<div style="padding:10px 2px 0"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px"><button class="link" style="margin:0" onclick="gcards(${gi})">📖 카드</button><button class="link" style="margin:0" onclick="gquiz(${gi})">🎯 퀴즈</button><button class="link" style="margin:0" onclick="gspell(${gi})">✏️ 쓰기</button><button class="link" style="margin:0;color:var(--coral)" onclick="gdel(${gi})">폴더 삭제</button></div>`+ks.map(k=>{const c=S.custom[k];return `<div class="stat" style="display:flex;align-items:center;gap:8px;margin:8px 0 0;text-align:left"><button class="spk" style="width:40px;height:40px;font-size:18px" onclick="speak('${c.w}')">🔊</button><span style="flex:1"><b style="display:inline;font-size:18px">${c.w}</b> ${c.m}</span><button class="link" style="margin:0" onclick="del(${k})">삭제</button></div>`}).join('')+`</div>`:'')+`</div>`}).join('');
+    return `<div style="margin-bottom:10px"><button class="big" style="margin:0;padding:14px 16px;font-size:19px;display:flex;align-items:center;gap:8px" onclick="tg(${gi})"><span>${o?'📂':'📁'}</span><b style="flex:1;font-weight:normal">${nm}</b><span class="count" style="font-size:15px">${ks.length}개 ${o?'▾':'▸'}</span></button>`+(o?`<div style="padding:10px 2px 0"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px"><button class="link" style="margin:0" onclick="gcards(${gi})">📖 카드</button><button class="link" style="margin:0" onclick="gquiz(${gi})">🎯 퀴즈</button><button class="link" style="margin:0" onclick="gspell(${gi})">✏️ 쓰기</button><button class="link" style="margin:0" onclick="gpron(${gi})">🎤 발음</button><button class="link" style="margin:0;color:var(--coral)" onclick="gdel(${gi})">폴더 삭제</button></div>`+ks.map(k=>{const c=S.custom[k];return `<div class="stat" style="display:flex;align-items:center;gap:8px;margin:8px 0 0;text-align:left"><button class="spk" style="width:40px;height:40px;font-size:18px" onclick="speak('${c.w}')">🔊</button><span style="flex:1"><b style="display:inline;font-size:18px">${c.w}</b> ${c.m}</span><button class="link" style="margin:0" onclick="del(${k})">삭제</button></div>`}).join('')+`</div>`:'')+`</div>`}).join('');
 }
 function cleanLine(l){
   l=l.replace(/[|\t]+/g,' ').replace(/^[\s\d.)\-•*]+/,'');
