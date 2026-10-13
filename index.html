@@ -61,8 +61,9 @@ textarea{font-size:16px;text-align:left;height:140px}
 const BASE=`school 학교|teacher 선생님|student 학생|classroom 교실|homework 숙제|library 도서관|lesson 수업|question 질문|answer 대답|remember 기억하다|forget 잊다|study 공부하다|learn 배우다|practice 연습하다|understand 이해하다|important 중요한|difficult 어려운|easy 쉬운|different 다른|same 같은|family 가족|friend 친구|neighbor 이웃|brother 형제|sister 자매|parent 부모|grandmother 할머니|breakfast 아침 식사|lunch 점심|dinner 저녁 식사|vegetable 채소|fruit 과일|delicious 맛있는|hungry 배고픈|thirsty 목마른|weather 날씨|sunny 화창한|rainy 비 오는|cloudy 흐린|season 계절|winter 겨울|summer 여름|morning 아침|evening 저녁|yesterday 어제|tomorrow 내일|always 항상|sometimes 가끔|never 결코 ~않다|hobby 취미|music 음악|movie 영화|sport 운동|soccer 축구|swim 수영하다|dance 춤추다|travel 여행하다|airport 공항|station 역|museum 박물관|hospital 병원|restaurant 식당|market 시장|street 거리|beautiful 아름다운|dangerous 위험한|safe 안전한|healthy 건강한|happy 행복한|angry 화난|tired 피곤한|excited 신난|worried 걱정하는|kind 친절한|honest 정직한|brave 용감한|shy 수줍은|smart 똑똑한|borrow 빌리다|lend 빌려주다|choose 고르다|decide 결정하다|invite 초대하다|visit 방문하다|enjoy 즐기다|believe 믿다|wait 기다리다|help 돕다`.split('|').map(s=>{const i=s.indexOf(' ');return{w:s.slice(0,i),m:s.slice(i+1)}});
 const HARD=`achieve 달성하다|advantage 장점|advice 조언|afford ~할 여유가 있다|ancient 고대의|appear 나타나다|arrange 정리하다|attend 참석하다|average 평균|avoid 피하다|behavior 행동|benefit 이익|celebrate 기념하다|century 세기|challenge 도전|cheerful 쾌활한|communicate 의사소통하다|compare 비교하다|complain 불평하다|complete 완성하다|concentrate 집중하다|condition 상태|confident 자신 있는|consider 고려하다|contain 포함하다|contest 대회|courage 용기|creative 창의적인|culture 문화|customer 고객|damage 손해|decorate 장식하다|describe 묘사하다|destroy 파괴하다|develop 발전시키다|discover 발견하다|distance 거리|divide 나누다|donate 기부하다|effort 노력|elderly 나이 든|empty 빈|encourage 격려하다|energy 에너지|enough 충분한|environment 환경|equal 동등한|escape 탈출하다|event 행사|exact 정확한|examine 검사하다|experience 경험|explain 설명하다|express 표현하다|familiar 익숙한|festival 축제|foreign 외국의|freedom 자유|garbage 쓰레기|generous 관대한|gentle 온화한|grateful 감사하는|guess 추측하다|habit 습관|harmony 조화|huge 거대한|imagine 상상하다|improve 향상시키다|include 포함하다|increase 증가하다|information 정보|invent 발명하다|journey 여정|knowledge 지식|language 언어|local 지역의|lonely 외로운|manage 관리하다|mention 언급하다|mistake 실수|modern 현대의|necessary 필요한|offer 제안하다|opinion 의견|ordinary 평범한|painful 고통스러운|patient 참을성 있는|perform 공연하다|permit 허락하다|plenty 많음|polite 예의 바른|popular 인기 있는|position 위치|possible 가능한|prepare 준비하다|prevent 막다|private 사적인|produce 생산하다|promise 약속하다|protect 보호하다|proud 자랑스러운|provide 제공하다|public 공공의|recycle 재활용하다|reduce 줄이다|refuse 거절하다|region 지역|relax 휴식하다|rely 의존하다|remain 남다|repeat 반복하다|require 요구하다|rescue 구조하다|respect 존경하다|respond 대답하다|responsible 책임감 있는|result 결과|reward 보상|risk 위험|role 역할|satisfy 만족시키다|scared 무서워하는|serious 심각한|shelter 대피소|similar 비슷한|situation 상황|society 사회|solve 해결하다|spread 퍼지다|stranger 낯선 사람|succeed 성공하다|suggest 제안하다|support 지지하다|surprise 놀라게 하다|survive 살아남다|tradition 전통|useful 유용한|volunteer 자원봉사자|wisdom 지혜|wonder 궁금해하다|worth ~할 가치가 있는`.split('|').map(s=>{const i=s.indexOf(' ');return{w:s.slice(0,i),m:s.slice(i+1),l:2}});
 const $=s=>document.querySelector(s),app=$('#app');
-let S={qs:true,wrong:{},cfg:null,dirty:false,lastSync:0,xp:0,mute:false,lv:'all',seen:{},box:{},custom:[],streak:0,last:'',today:{d:'',n:0}};
+let S={exam:{},examLog:[],badges:{},st:{perfect:0,pass:0,hundred:0,pron:0,maxCombo:0,right:0},cat:{head:'',side:''},lastBackupDay:'',qs:true,wrong:{},cfg:null,dirty:false,lastSync:0,xp:0,mute:false,lv:'all',seen:{},box:{},custom:[],streak:0,last:'',today:{d:'',n:0}};
 try{const r=localStorage.getItem('vocaS');if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+S.st=Object.assign({perfect:0,pass:0,hundred:0,pron:0,maxCombo:0,right:0},S.st);
 const save=()=>{try{localStorage.setItem('vocaS',JSON.stringify(S))}catch(e){}};
 const day=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
 const words=()=>{const seen={};return BASE.concat(HARD).filter(x=>(S.lv==='all'||(S.lv==='2'?x.l===2:!x.l))&&!seen[x.w]&&(seen[x.w]=1)).concat(S.custom)};
@@ -84,9 +85,9 @@ function toast(t,ms){let e=document.getElementById('toast');if(!e){e=document.cr
 function gain(p){const b=lv(S.xp);S.xp=(S.xp||0)+p;{const t=day();if(S.today.d!==t||!S.today.ws)S.today={d:t,n:0,ws:{}};S.today.xp=(S.today.xp||0)+p}applyTheme();if(lv(S.xp)>b)setTimeout(()=>{sfx('done');toast(ti(lv(S.xp))>ti(b)?'🎊 새 호칭! '+ttl(lv(S.xp)):'🎉 레벨 업! Lv.'+lv(S.xp),2400)},900)}
 const wtag=w=>{const o=S.wrong&&S.wrong[w];return o&&box(w)<4?`<div class="wtag">❗ 틀렸던 단어 · ${o.c}번 틀림</div>`:''};
 function newGame(){return{combo:0,best:0,score:0,right:0,wrong:0,bonus:0,
-  ans(ok){if(ok){this.right++;this.combo++;this.best=Math.max(this.best,this.combo);const p=10+Math.min(this.combo-1,5)*2;this.score+=p;gain(p);sfx(this.combo>=3?'combo':'ok');toast(this.combo>=2?'🔥 '+this.combo+'콤보! +'+p:pr(PR_OK)+' +'+p)}else{this.wrong++;this.combo=0;sfx('bad');toast(pr(PR_NO))}},
+  ans(ok){if(ok){this.right++;this.combo++;this.best=Math.max(this.best,this.combo);S.st.maxCombo=Math.max(S.st.maxCombo||0,this.combo);const p=10+Math.min(this.combo-1,5)*2;this.score+=p;gain(p);sfx(this.combo>=3?'combo':'ok');toast(this.combo>=2?'🔥 '+this.combo+'콤보! +'+p:pr(PR_OK)+' +'+p)}else{this.wrong++;this.combo=0;sfx('bad');toast(pr(PR_NO))}},
   tag(){return '· ⭐'+this.score+(this.combo>1?' 🔥'+this.combo:'')},
-  perfect(n){if(n>=5&&this.wrong===0&&this.right===n){this.bonus=n*PERFECT;gain(this.bonus);save();toast('🌟 퍼펙트! 보너스 +'+this.bonus+' XP',2400);return this.bonus}return 0},
+  perfect(n){if(n>=5&&this.wrong===0&&this.right===n){this.bonus=n*PERFECT;gain(this.bonus);S.st.perfect++;save();toast('🌟 퍼펙트! 보너스 +'+this.bonus+' XP',2400);return this.bonus}return 0},
   end(){return '점수 '+this.score+'점 · 최고 콤보 '+this.best+' 🔥'+(this.bonus?' · 🌟 보너스 +'+this.bonus+' XP':'')}}}
 window.toggleQs=()=>{S.qs=S.qs===false;save();home()};
 window.toggleMute=()=>{S.mute=!S.mute;save();home()};
@@ -97,17 +98,17 @@ function mark(w,ok,kind,ms){
   else if(kind!=='card'&&due(w)){S.box[w]=Math.min(5,box(w)+1);S.seen[w]=Date.now()}
   const t=day();
   if(S.today.d!==t||!S.today.ws)S.today={d:t,n:0,ws:{}};
-  if(kind!=='card'){S.today.tr=(S.today.tr||0)+1;if(ok)S.today.ok=(S.today.ok||0)+1}
+  if(kind!=='card'){S.today.tr=(S.today.tr||0)+1;if(ok){S.today.ok=(S.today.ok||0)+1;S.st.right++}}
   if(!ok){const x=BASE.concat(HARD,S.custom).find(z=>z.w===w),o=S.wrong[w]||{c:0};S.wrong[w]={m:x?x.m:(o.m||''),c:o.c+1,d:iso()}}
   S.today.ws[w]=1;S.today.n=Object.keys(S.today.ws).length;
-  if(ms&&ok&&kind!=='card'){S.today.ms=S.today.ms||{};S.today.ms[w]=1;S.today.mn=Object.keys(S.today.ms).length}
+  if(ms&&ok&&kind!=='card'&&S.custom.some(c=>c.w===w)){S.today.ms=S.today.ms||{};S.today.ms[w]=1;S.today.mn=Object.keys(S.today.ms).length}
   if((S.today.mn||0)>=GOAL&&!S.today.done){S.today.done=1;S.xp=(S.xp||0)+30;S.today.xp=(S.today.xp||0)+30;setTimeout(()=>{sfx('done');toast('🎯 오늘의 미션 완료! +30XP',2200)},1400)}
   if(S.last!==t){const y=new Date();y.setDate(y.getDate()-1);const ys=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();S.streak=S.last===ys?S.streak+1:1;S.last=t}
-  save();sync();
+  save();sync();checkBadges();
 }
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 function pick(n,only){ // weakest boxes first, random within box
-  const all=shuffle(only===true?S.custom:only?S.custom.filter(c=>gname(c)===only):words());all.sort((a,b)=>(due(b.w)-due(a.w))||(box(a.w)-box(b.w)));return shuffle(all.slice(0,n));
+  const all=shuffle(only==='__wrong'?wrongPool():only===true?S.custom:only?S.custom.filter(c=>gname(c)===only):words());all.sort((a,b)=>(due(b.w)-due(a.w))||(box(a.w)-box(b.w)));return shuffle(all.slice(0,n));
 }
 const iso=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -119,7 +120,11 @@ function payload(){
 }
 function doSync(){
   const C=S.cfg;if(!C||!C.url||!C.token||!navigator.onLine)return;
-  try{fetch(C.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload()),keepalive:true}).then(()=>{S.dirty=false;S.lastSync=Date.now();save()}).catch(()=>{})}catch(e){}
+  const p=payload();
+  if(S.lastBackupDay!==iso())p.backup=JSON.stringify(Object.assign({},S,{cfg:undefined,dirty:undefined,lastSync:undefined,lastBackupDay:undefined}));
+  p.exams=(S.examLog||[]).slice(-50);
+  const hb=!!p.backup,body=JSON.stringify(p);
+  try{fetch(C.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body,keepalive:body.length<60000}).then(()=>{S.dirty=false;S.lastSync=Date.now();if(hb)S.lastBackupDay=iso();save()}).catch(()=>{})}catch(e){}
 }
 function sync(now){
   const C=S.cfg;if(!C||!C.url||!C.token)return;
@@ -149,15 +154,114 @@ function settings(){
   <label class="sub">웹 앱 URL (끝이 /exec)</label><input id="c_u" value="${esc(C.url||'')}" placeholder="https://script.google.com/macros/s/…/exec" autocapitalize="none" style="${f};font-size:13px">
   <label class="sub">비밀 코드</label><input id="c_t" value="${esc(C.token||'')}" autocapitalize="none" style="${f}">
   <label class="sub">부모 비밀번호 (설정 화면을 잠가요 · 비워도 돼요)</label><input id="c_p" value="${esc(C.pin||'')}" inputmode="numeric" style="${f}">
-  <button class="go" onclick="cfgSave()">저장하기</button><button class="go" style="background:var(--mint)" onclick="cfgTest()">연결 테스트</button><button class="go" style="background:var(--card)" onclick="cfgSend()">지금 전송하기</button>
+  <button class="go" onclick="cfgSave()">저장하기</button><button class="go" style="background:var(--mint)" onclick="cfgTest()">연결 테스트</button><button class="go" style="background:var(--card)" onclick="cfgSend()">지금 전송하기</button><button class="go" style="background:var(--sun)" onclick="cfgBackup()">☁️ 지금 백업하기</button><button class="go" style="background:var(--card)" onclick="cfgRestore()">⬇️ 백업에서 복원하기</button>
   <div class="msg" id="cm" style="font-size:16px"></div><p class="sub" style="text-align:center">마지막 전송 요청: ${last}</p><div style="text-align:center"><button class="link" onclick="cfgClear()">연결 해제</button></div>`;
 }
+const topbar='<div class="top"><button class="back" onclick="home()">← 처음으로</button></div>';
+const known=()=>BASE.concat(HARD,S.custom).filter(x=>box(x.w)>=4).length;
+const api=(C,act)=>C.url+(C.url.indexOf('?')<0?'?':'&')+'action='+act+'&token='+encodeURIComponent(C.token)+'&kid='+encodeURIComponent(C.kid||'');
+function cfgBackup(){
+  if(!cfgSave())return;
+  S.lastBackupDay='';S.dirty=true;doSync();cfgMsg('백업을 보냈어요. 확인 중…');
+  setTimeout(()=>{fetch(api(S.cfg,'info')).then(r=>r.json()).then(j=>cfgMsg(j.ok?'✅ 백업 완료 ('+j.time+')':'❌ '+(j.msg||'확인하지 못했어요'))).catch(()=>cfgMsg('❌ 확인하지 못했어요. 잠시 뒤 다시 눌러 보세요.'))},4000);
+}
+function cfgRestore(){
+  if(!cfgSave())return;
+  if(!confirm('이 폰의 기록을 시트에 저장된 백업으로 바꿀까요?'))return;
+  cfgMsg('불러오는 중…');
+  fetch(api(S.cfg,'restore')).then(r=>r.json()).then(j=>{
+    if(!j.ok){cfgMsg('❌ '+j.msg);return}
+    const keep=S.cfg;S=Object.assign(S,JSON.parse(j.data));S.cfg=keep;
+    S.st=Object.assign({perfect:0,pass:0,hundred:0,pron:0,maxCombo:0,right:0},S.st);save();
+    cfgMsg('✅ 복원했어요! ('+j.time+')');setTimeout(home,1200);
+  }).catch(()=>cfgMsg('❌ 불러오지 못했어요. URL과 비밀 코드를 확인해 주세요.'));
+}
+const BADGES=[
+ ['first','🌟','첫 걸음','단어를 처음 맞혔어요',()=>S.st.right>=1],
+ ['s3','🔥','3일 연속','3일 연속 공부',()=>S.streak>=3],
+ ['s7','🔥','7일 연속','7일 연속 공부',()=>S.streak>=7],
+ ['s30','🏆','30일 연속','30일 연속 공부',()=>S.streak>=30],
+ ['c10','⚡','10콤보','퀴즈·쓰기 10콤보',()=>S.st.maxCombo>=10],
+ ['p1','🌟','퍼펙트!','전부 맞히기 1번',()=>S.st.perfect>=1],
+ ['p5','💎','퍼펙트 5번','전부 맞히기 5번',()=>S.st.perfect>=5],
+ ['k50','🌱','50단어','외운 단어 50개',()=>known()>=50],
+ ['k100','🌳','100단어','외운 단어 100개',()=>known()>=100],
+ ['k300','🌲','300단어','외운 단어 300개',()=>known()>=300],
+ ['e1','📝','시험 통과','단어 시험 80점 이상',()=>S.st.pass>=1],
+ ['e100','💯','100점!','단어 시험 100점',()=>S.st.hundred>=1],
+ ['v30','🎤','발음 달인','정확한 발음 30번',()=>S.st.pron>=30],
+ ['l10','🧭','탐험가','Lv.10 달성',()=>lv(S.xp)>=10],
+ ['w10','💪','오답 극복','틀렸던 단어 10개 외움',()=>Object.keys(S.wrong||{}).filter(w=>box(w)>=4).length>=10]
+];
+function checkBadges(){
+  const n=[];BADGES.forEach(b=>{if(!S.badges[b[0]]&&b[4]()){S.badges[b[0]]=iso();n.push(b)}});
+  if(n.length){save();setTimeout(()=>{sfx('done');toast('🏅 새 뱃지! '+n.map(b=>b[1]+' '+b[2]).join(', '),2600)},1700)}
+}
+function badgeScreen(){
+  app.innerHTML=topbar+`<h1>🏅 뱃지</h1><p class="sub">${Object.keys(S.badges).length}/${BADGES.length}개 모았어요</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">`+BADGES.map(b=>{const on=S.badges[b[0]];return `<div class="stat" style="${on?'':'opacity:.45;filter:grayscale(1)'}"><div style="font-size:34px">${b[1]}</div><b style="display:block;font-size:16px">${b[2]}</b><span style="font-size:12px">${b[3]}</span>${on?`<div class="count" style="font-size:11px">${on}</div>`:''}</div>`}).join('')+'</div>';
+}
+const CAT_ITEMS=[['head','🎀','리본',2],['head','🧢','야구모자',5],['head','🎩','신사모자',10],['head','👑','왕관',20],['head','🎓','학사모',30],['side','🐟','생선',3],['side','📚','책',7],['side','⚽','축구공',9],['side','🎸','기타',12],['side','🏆','트로피',15],['side','🚀','로켓',25],['side','🌈','무지개',40]];
+function catHtml(z){const c=S.cat||{};return `<div style="position:relative;width:${z}px;height:${z}px;flex:none"><img src="${LOGO}" alt="소은콕" style="width:100%;height:100%;border-radius:${Math.round(z*.23)}px"><span style="position:absolute;top:${-Math.round(z*.2)}px;left:50%;transform:translateX(-50%);font-size:${Math.round(z*.4)}px">${c.head||''}</span><span style="position:absolute;bottom:${-Math.round(z*.05)}px;right:${-Math.round(z*.12)}px;font-size:${Math.round(z*.38)}px">${c.side||''}</span></div>`}
+function catRoom(){
+  const L=lv(S.xp),c=S.cat||{},t=day(),studied=S.today.d===t&&S.today.n>0;
+  app.innerHTML=topbar+`<h1>🐱 고양이 방</h1><p class="sub">${studied?'😸 오늘도 공부해 줘서 고마워!':'😿 공부하러 오기를 기다리고 있어요…'}</p><div style="display:flex;justify-content:center;padding:30px 0 22px">${catHtml(150)}</div><p class="sub" style="text-align:center">Lv.${L}이 되면 새 아이템이 열려요. 누르면 쓰고, 다시 누르면 벗어요.</p><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">`+CAT_ITEMS.map((it,i)=>{const open=L>=it[3],on=c[it[0]]===it[1];return `<button class="stat" onclick="catEq(${i})" style="${open?'':'opacity:.45'};${on?'border-color:var(--ink);background:var(--sun);color:#1F2A44':''}"><div style="font-size:30px">${open?it[1]:'🔒'}</div><span style="font-size:12px">${it[2]}</span><div class="count" style="font-size:11px">${open?(on?'착용 중':(it[0]==='head'?'머리':'옆')):'Lv.'+it[3]}</div></button>`}).join('')+'</div>';
+}
+window.catEq=i=>{const it=CAT_ITEMS[i];if(lv(S.xp)<it[3])return;S.cat=S.cat||{};S.cat[it[0]]=S.cat[it[0]]===it[1]?'':it[1];save();catRoom()};
+function wrongPool(){const all=BASE.concat(HARD,S.custom);return Object.keys(S.wrong||{}).filter(w=>box(w)<4).map(w=>all.find(x=>x.w===w)||{w,m:(S.wrong[w]||{}).m||''}).filter(x=>x.m)}
+function wrongNote(){
+  const p=wrongPool();
+  if(!p.length){alert('복습할 틀린 단어가 없어요 🎉');return}
+  const top=p.slice().sort((a,b)=>S.wrong[b.w].c-S.wrong[a.w].c).slice(0,12);
+  app.innerHTML=topbar+`<h1>📒 오답 노트</h1><p class="sub">틀렸지만 아직 못 외운 단어 ${p.length}개예요. 외우면 노트에서 사라져요.</p><button class="big" onclick="quiz('__wrong')">🎯 퀴즈로 복습<small>틀린 단어만 4지선다</small></button><button class="big" onclick="spell('__wrong')">✏️ 쓰기로 복습<small>소리 듣고 직접 쓰기</small></button><button class="big" onclick="cards('__wrong')">🃏 카드로 복습<small>보고 듣고 눈에 익히기</small></button><p class="sub" style="margin-top:14px">많이 틀린 단어</p>`+top.map(x=>`<div class="stat" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;text-align:left"><button class="spk" style="width:40px;height:40px;font-size:18px" onclick="speak('${x.w}')">🔊</button><span style="flex:1"><b style="display:inline;font-size:18px">${x.w}</b> ${x.m}</span><span class="count">${S.wrong[x.w].c}번</span></div>`).join('');
+}
+const nz=t=>String(t).toLowerCase().replace(/\s+/g,' ').trim();
+function examPick(){
+  const gs=groups();
+  if(!gs.length){alert('시험은 "내 단어" 폴더로 봐요. 먼저 "내 단어 추가"에서 단어를 넣어 주세요.');return}
+  app.innerHTML=topbar+`<h1>📝 단어 시험</h1><p class="sub">뜻을 보고 영어로 써요. 끝나면 한 번에 채점하고, 80점 이상이면 통과예요!</p>`+gs.map(([g,ks],gi)=>{const E=S.exam[g]||{},kn=ks.filter(k=>box(S.custom[k].w)>=4).length;return `<div class="stat" style="text-align:left;margin-bottom:12px"><b style="display:block;font-size:19px">📁 ${esc(g)}</b><span>${ks.length}개 · 외운 비율 ${Math.round(kn/ks.length*100)}% · 최고 ${E.best==null?'-':E.best+'점'}</span><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="date" value="${E.date||''}" onchange="examDate(${gi},this.value)" style="font-size:15px;padding:8px;flex:1;width:auto;text-align:left"><button class="go" style="margin:0;width:auto;padding:10px 18px" onclick="examStart(${gi})">시험 보기</button></div><div class="count" style="font-size:12px;margin-top:4px">시험 날짜를 정하면 첫 화면에 D-day가 보여요</div></div>`}).join('');
+}
+window.examDate=(gi,v)=>{const g=groups()[gi][0];S.exam[g]=Object.assign(S.exam[g]||{},{date:v});save()};
+window.examStart=gi=>{const [g,ks]=groups()[gi];examRun(g,ks.map(k=>S.custom[k]),true)};
+function examRun(g,list,scored){
+  const q=shuffle(list).slice(0,50),ans=[];let i=0;
+  const show=()=>{
+    if(i>=q.length)return grade();
+    const c=q[i];
+    app.innerHTML=`<div class="top"><button class="back" onclick="if(confirm('시험을 그만둘까요?'))home()">← 그만두기</button><span class="count">시험 ${i+1}/${q.length}</span></div><div class="flash"><div class="hint">${scored?'📝 '+esc(g):'🔁 틀린 것 다시 풀기'}</div><div class="mean" style="font-size:34px">${esc(c.m)}</div><div class="hint">영어로 써 보세요</div></div><div style="margin-top:14px"><input id="ex" autocomplete="off" autocapitalize="none" spellcheck="false"><button class="go" onclick="exNext()">${i+1<q.length?'다음':'제출'}</button></div>`;
+    const e=$('#ex');e.addEventListener('keydown',ev=>{if(ev.key==='Enter')exNext()});e.focus();
+  };
+  window.exNext=()=>{ans.push(($('#ex').value||'').trim());i++;show()};
+  const grade=()=>{
+    const res=q.map((c,k)=>({c,a:ans[k],ok:nz(ans[k])===nz(c.w)})),right=res.filter(r=>r.ok).length,total=q.length,score=Math.round(right/total*100),bad=res.filter(r=>!r.ok);
+    res.forEach(r=>mark(r.c.w,r.ok,'spell',true));
+    let xp=0,best='';
+    if(scored){
+      xp=right*2+(score>=80?30:0)+(score===100?30:0);gain(xp);
+      const E=S.exam[g]=Object.assign(S.exam[g]||{},{best:Math.max((S.exam[g]||{}).best||0,score),last:score,lastDate:iso()});best=E.best;
+      if(score>=80)S.st.pass++;if(score===100)S.st.hundred++;
+      S.examLog=(S.examLog||[]).concat({id:Date.now(),date:iso(),g,score,right,total,wrong:bad.map(r=>r.c.w)}).slice(-50);
+    }
+    save();sync(true);checkBadges();sfx(score>=80?'done':'bad');
+    app.innerHTML=`<div class="end"><div class="word">${score>=80?'🎉':'💪'}</div><h1>${score}점</h1><p class="sub">${right}/${total} 정답${scored?(score>=80?' · 통과! ':' · 80점 이상이면 통과예요 · ')+'+'+xp+' XP':''}</p>${scored?`<p class="sub">최고 점수 ${best}점</p>`:''}</div>`+(bad.length?`<p class="sub">틀린 단어 ${bad.length}개</p>`+bad.map(r=>`<div class="stat" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;text-align:left"><button class="spk" style="width:40px;height:40px;font-size:18px" onclick="speak('${r.c.w}')">🔊</button><span style="flex:1"><b style="display:inline;font-size:18px">${esc(r.c.w)}</b> ${esc(r.c.m)}<br><span class="count">내 답: ${r.a?esc(r.a):'(빈칸)'}</span></span></div>`).join('')+`<button class="go" onclick="exRetry()">틀린 것만 다시 풀기</button>`:'<p class="sub" style="text-align:center">전부 맞혔어요! 🌟</p>')+`<button class="go" style="background:var(--card)" onclick="home()">처음으로</button>`;
+    window.exRetry=()=>examRun(g,bad.map(r=>r.c),false);
+  };
+  show();
+}
+function ddayHtml(){
+  const t=iso();let b=null;
+  for(const [g,E] of Object.entries(S.exam||{}))if(E.date&&E.date>=t&&(!b||E.date<b.date))b={g,date:E.date};
+  if(!b)return '';
+  const d=Math.round((new Date(b.date)-new Date(t))/864e5),ks=S.custom.filter(c=>gname(c)===b.g),kn=ks.filter(c=>box(c.w)>=4).length;
+  return `<div class="stat" style="text-align:left;margin-bottom:14px;cursor:pointer" onclick="examPick()"><div>📝 ${esc(b.g)} 시험 <b style="display:inline;font-size:20px;color:var(--coral)">${d===0?'D-DAY!':'D-'+d}</b></div><div class="bar" style="margin:6px 0 4px"><i style="width:${ks.length?Math.round(kn/ks.length*100):0}%;background:var(--coral)"></i></div><span>외운 비율 ${ks.length?Math.round(kn/ks.length*100):0}% (${kn}/${ks.length})</span></div>`;
+}
 function home(){
+  checkBadges();
   applyTheme();
   const t=day(),n=S.today.d===t?S.today.n:0,mn=S.today.d===t?(S.today.mn||0):0,known=words().filter(x=>box(x.w)>=4).length,tot=words().length;
-  app.innerHTML=`<div class="brand"><img src="${LOGO}" alt="소은콕"><div><h1>소은콕</h1><p class="sub">하루 10분, 콕콕 외우자!</p></div></div>
+  app.innerHTML=`<div class="brand" style="margin-top:16px">${catHtml(70)}<div><h1>소은콕</h1><p class="sub">하루 10분, 콕콕 외우자!</p></div></div>
   <div class="stat" style="text-align:left;margin-bottom:10px"><div style="display:flex;justify-content:space-between"><b style="display:inline;font-size:20px">Lv.${lv(S.xp)} ${ttl(lv(S.xp))}</b><span>${(S.xp||0)%100}/100 XP</span></div><div class="bar" style="margin:6px 0 0"><i style="width:${(S.xp||0)%100}%;background:var(--sun)"></i></div>${ti(lv(S.xp))<TITLES.length-1?`<span class="count" style="font-size:13px">다음 호칭 ${TITLES[ti(lv(S.xp))+1]} · Lv.${(ti(lv(S.xp))+1)*10}</span>`:''}</div>
   <div class="stat" style="text-align:left;margin-bottom:14px"><div>🎯 오늘의 미션: 내 단어 ${GOAL}개 맞히기 ${S.today.d===t&&S.today.done?'✅':''}</div><div class="bar" style="margin:6px 0 4px"><i style="width:${Math.min(100,mn/GOAL*100)}%"></i></div><span>${Math.min(mn,GOAL)}/${GOAL} · 퀴즈·쓰기로 맞혀야 올라가요 · +30 XP${S.custom.length?'':' · 먼저 "내 단어 추가"에서 단어를 넣어 주세요'}</span></div>
+  ${ddayHtml()}
   <div class="stats"><div class="stat"><b>${S.last===t||S.streak?S.streak:0}일</b><span>연속 학습</span></div><div class="stat"><b>${n}</b><span>오늘 푼 단어</span></div><div class="stat"><b>${known}/${tot}</b><span>외운 단어</span></div></div>
   <div class="bar"><i style="width:${known/tot*100}%"></i></div>
   <div class="chips">${[['all','전체'],['1','기본'],['2','심화']].map(([v,t])=>`<button class="chip${S.lv===v?' on':''}" onclick="setLv('${v}')">${t}</button>`).join('')}</div>
@@ -166,13 +270,16 @@ function home(){
   <button class="big" onclick="quiz()">🎯 뜻 맞히기 퀴즈<small>발음 듣고 4개 중 고르기 · 전부 맞히면 보너스!</small></button>
   <button class="big" onclick="spell()">✏️ 스펠링 쓰기<small>소리를 듣고 직접 써보기 · 전부 맞히면 보너스!</small></button>
   <button class="big" onclick="pronounce(true)">🎤 발음 연습<small>내 단어로 듣고 따라 말하기 (${S.custom.length}개) · 정확하면 XP</small></button>
+  <button class="big" onclick="wrongNote()">📒 오답 노트<small>틀린 단어만 모아서 복습</small></button>
+  <button class="big" onclick="examPick()">📝 단어 시험<small>폴더별 시험 · 80점 이상 통과</small></button>
   <button class="big" onclick="addw()">➕ 내 단어 추가<small>학원·교과서 단어 넣기</small></button>
+  <div style="display:flex;gap:10px"><button class="big" style="flex:1;font-size:17px" onclick="badgeScreen()">🏅 뱃지<small>${Object.keys(S.badges).length}/${BADGES.length}개</small></button><button class="big" style="flex:1;font-size:17px" onclick="catRoom()">🐱 고양이 방<small>꾸미기</small></button></div>
   <div style="text-align:center"><button class="link" onclick="toggleMute()">${S.mute?'🔇 효과음 꺼짐 (누르면 켜짐)':'🔊 효과음 켜짐 (누르면 꺼짐)'}</button></div>
   <div style="text-align:center"><button class="link" onclick="toggleQs()">${S.qs===false?'🎤 퀴즈 따라 말하기: 꺼짐 (누르면 켜짐)':'🎤 퀴즈 따라 말하기: 켜짐 (누르면 꺼짐)'}</button></div>
   <div style="text-align:center"><button class="link" onclick="settings()">⚙️ 부모 설정</button></div>`;
 }
 const head=(t,i,n,x)=>`<div class="top"><button class="back" onclick="home()">← 처음으로</button><span class="count">${t} ${i+1}/${n} ${x||''}</span></div>`;
-function done(msg,sub){sync(true);app.innerHTML=`<div class="end"><div class="word">🎉</div><h1>${msg}</h1><p class="sub">${sub||'틀린 단어는 다음에 더 자주 나와요.'}</p><button class="go" onclick="home()">처음으로</button></div>`}
+function done(msg,sub){sync(true);checkBadges();app.innerHTML=`<div class="end"><div class="word">🎉</div><h1>${msg}</h1><p class="sub">${sub||'틀린 단어는 다음에 더 자주 나와요.'}</p><button class="go" onclick="home()">처음으로</button></div>`}
 const SR=()=>window.SpeechRecognition||window.webkitSpeechRecognition;
 const norm=t=>String(t).toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
 function setLive(t){const e=document.querySelector('#pm')||document.querySelector('#qm')||document.querySelector('#sp');if(e){e.style.color='var(--ink)';e.textContent='🎙️ 들리는 소리: "'+t+'"'}}
@@ -220,13 +327,13 @@ function checkSay(w,res){
   if(res.alts.map(norm).includes(norm(w))){
     sfx('combo');let x='';
     if(res.kb)return{t:'✅ 맞아요! (키보드 입력이라 XP는 없어요)',ok:true,kb:true};
-    if(!(S.today.d===day()&&S.today.sp&&S.today.sp[w])){gain(5);S.today.sp=S.today.sp||{};S.today.sp[w]=1;save();x=' +5 XP'}
+    if(!(S.today.d===day()&&S.today.sp&&S.today.sp[w])){gain(5);S.st.pron++;S.today.sp=S.today.sp||{};S.today.sp[w]=1;save();x=' +5 XP'}
     return{t:'✅ 좋아요! 발음이 정확해요.'+x,ok:true};
   }
   sfx('bad');return{t:'❌ 이렇게 들렸어요: "'+res.alts[0]+'" → 정답은 '+w+'. 다시 말해 보세요!',ok:false};
 }
 function cards(only){
-  if(only&&!S.custom.length){alert('아직 추가한 단어가 없어요. "내 단어 추가"에서 먼저 넣어주세요.');return}
+  if(only===true&&!S.custom.length){alert('아직 추가한 단어가 없어요. "내 단어 추가"에서 먼저 넣어주세요.');return}
   const q=pick(10,only);let i=0,flip=false,sp={i:-1,t:'',ok:false};
   const show=()=>{
     if(i>=q.length)return done('카드 끝!','퀴즈·스펠링에서 맞혀야 "외운 단어"가 돼요.');
