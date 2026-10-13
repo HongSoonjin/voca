@@ -52,6 +52,7 @@ textarea{font-size:16px;text-align:left;height:140px}
 .toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 20px;border-radius:22px;font-size:20px;z-index:9;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 .wtag{background:var(--coral);color:#fff;border-radius:14px;padding:4px 12px;font-size:14px}
 .mic{display:block;width:100%;margin-top:12px;padding:14px;border-radius:16px;border:2px solid var(--ink);background:var(--card);font-size:18px}
+.mini{width:46px;padding:6px 0;border-radius:12px;border:2px solid var(--ink);background:var(--card);font-size:20px;line-height:1;display:flex;flex-direction:column;align-items:center;gap:2px}.mini small{font-size:10px;color:var(--mute)}
 .link{background:none;border:0;color:var(--mute);text-decoration:underline;margin-top:8px;font-size:15px}
 </style>
 </head>
@@ -258,7 +259,7 @@ function home(){
   checkBadges();
   applyTheme();
   const t=day(),n=S.today.d===t?S.today.n:0,mn=S.today.d===t?(S.today.mn||0):0,known=words().filter(x=>box(x.w)>=4).length,tot=words().length;
-  app.innerHTML=`<div class="brand" style="margin-top:16px">${catHtml(70)}<div><h1>소은콕</h1><p class="sub">하루 10분, 콕콕 외우자!</p></div></div>
+  app.innerHTML=`<div class="brand" style="margin-top:16px">${catHtml(70)}<div style="flex:1;min-width:0"><h1>소은콕</h1><p class="sub">하루 10분, 콕콕 외우자!</p></div><div style="display:flex;gap:6px;flex:none;align-self:flex-start"><button class="mini" onclick="badgeScreen()" aria-label="뱃지">🏅<small>${Object.keys(S.badges).length}/${BADGES.length}</small></button><button class="mini" onclick="catRoom()" aria-label="고양이 방">🐱<small>방</small></button></div></div>
   <div class="stat" style="text-align:left;margin-bottom:10px"><div style="display:flex;justify-content:space-between"><b style="display:inline;font-size:20px">Lv.${lv(S.xp)} ${ttl(lv(S.xp))}</b><span>${(S.xp||0)%100}/100 XP</span></div><div class="bar" style="margin:6px 0 0"><i style="width:${(S.xp||0)%100}%;background:var(--sun)"></i></div>${ti(lv(S.xp))<TITLES.length-1?`<span class="count" style="font-size:13px">다음 호칭 ${TITLES[ti(lv(S.xp))+1]} · Lv.${(ti(lv(S.xp))+1)*10}</span>`:''}</div>
   <div class="stat" style="text-align:left;margin-bottom:14px"><div>🎯 오늘의 미션: 내 단어 ${GOAL}개 맞히기 ${S.today.d===t&&S.today.done?'✅':''}</div><div class="bar" style="margin:6px 0 4px"><i style="width:${Math.min(100,mn/GOAL*100)}%"></i></div><span>${Math.min(mn,GOAL)}/${GOAL} · 퀴즈·쓰기로 맞혀야 올라가요 · +30 XP${S.custom.length?'':' · 먼저 "내 단어 추가"에서 단어를 넣어 주세요'}</span></div>
   ${ddayHtml()}
@@ -273,7 +274,6 @@ function home(){
   <button class="big" onclick="wrongNote()">📒 오답 노트<small>틀린 단어만 모아서 복습</small></button>
   <button class="big" onclick="examPick()">📝 단어 시험<small>폴더별 시험 · 80점 이상 통과</small></button>
   <button class="big" onclick="addw()">➕ 내 단어 추가<small>학원·교과서 단어 넣기</small></button>
-  <div style="display:flex;gap:10px"><button class="big" style="flex:1;font-size:17px" onclick="badgeScreen()">🏅 뱃지<small>${Object.keys(S.badges).length}/${BADGES.length}개</small></button><button class="big" style="flex:1;font-size:17px" onclick="catRoom()">🐱 고양이 방<small>꾸미기</small></button></div>
   <div style="text-align:center"><button class="link" onclick="toggleMute()">${S.mute?'🔇 효과음 꺼짐 (누르면 켜짐)':'🔊 효과음 켜짐 (누르면 꺼짐)'}</button></div>
   <div style="text-align:center"><button class="link" onclick="toggleQs()">${S.qs===false?'🎤 퀴즈 따라 말하기: 꺼짐 (누르면 켜짐)':'🎤 퀴즈 따라 말하기: 켜짐 (누르면 꺼짐)'}</button></div>
   <div style="text-align:center"><button class="link" onclick="settings()">⚙️ 부모 설정</button></div>`;
