@@ -53,6 +53,7 @@ textarea{font-size:16px;text-align:left;height:140px}
 .wtag{background:var(--coral);color:#fff;border-radius:14px;padding:4px 12px;font-size:14px}
 .mic{display:block;width:100%;margin-top:12px;padding:14px;border-radius:16px;border:2px solid var(--ink);background:var(--card);font-size:18px}
 .mini{width:46px;padding:6px 0;border-radius:12px;border:2px solid var(--ink);background:var(--card);font-size:20px;line-height:1;display:flex;flex-direction:column;align-items:center;gap:2px}.mini small{font-size:10px;color:var(--mute)}
+.exrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}.exn{width:22px;text-align:right;color:var(--mute);font-size:13px;flex:none}.exm{flex:1;font-size:17px;min-width:0;word-break:keep-all}.exin{flex:1.3;width:auto;font-size:17px;padding:10px;text-align:left;min-width:0}.exsp{flex:none;border:0;background:none;font-size:20px}.exbar{position:sticky;bottom:calc(env(safe-area-inset-bottom,0px) + 8px);padding-top:8px}
 .link{background:none;border:0;color:var(--mute);text-decoration:underline;margin-top:8px;font-size:15px}
 </style>
 </head>
@@ -219,34 +220,49 @@ const nz=t=>String(t).toLowerCase().replace(/\s+/g,' ').trim();
 function examPick(){
   const gs=groups();
   if(!gs.length){alert('시험은 "내 단어" 폴더로 봐요. 먼저 "내 단어 추가"에서 단어를 넣어 주세요.');return}
-  app.innerHTML=topbar+`<h1>📝 단어 시험</h1><p class="sub">뜻을 보고 영어로 써요. 끝나면 한 번에 채점하고, 80점 이상이면 통과예요!</p>`+gs.map(([g,ks],gi)=>{const E=S.exam[g]||{},kn=ks.filter(k=>box(S.custom[k].w)>=4).length;return `<div class="stat" style="text-align:left;margin-bottom:12px"><b style="display:block;font-size:19px">📁 ${esc(g)}</b><span>${ks.length}개 · 외운 비율 ${Math.round(kn/ks.length*100)}% · 최고 ${E.best==null?'-':E.best+'점'}</span><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="date" value="${E.date||''}" onchange="examDate(${gi},this.value)" style="font-size:15px;padding:8px;flex:1;width:auto;text-align:left"><button class="go" style="margin:0;width:auto;padding:10px 18px" onclick="examStart(${gi})">시험 보기</button></div><div class="count" style="font-size:12px;margin-top:4px">시험 날짜를 정하면 첫 화면에 D-day가 보여요</div></div>`}).join('');
+  app.innerHTML=topbar+`<h1>📝 단어 시험</h1><p class="sub">폴더의 단어가 한 화면에 모두 나와요. 영어를 채우고 채점하면 맞힌 단어는 사라지고 틀린 단어만 남아요. 첫 시도 점수가 80점 이상이면 통과예요!</p>`+gs.map(([g,ks],gi)=>{const E=S.exam[g]||{},kn=ks.filter(k=>box(S.custom[k].w)>=4).length;return `<div class="stat" style="text-align:left;margin-bottom:12px"><b style="display:block;font-size:19px">📁 ${esc(g)}</b><span>${ks.length}개 · 외운 비율 ${Math.round(kn/ks.length*100)}% · 최고 ${E.best==null?'-':E.best+'점'}</span><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="date" value="${E.date||''}" onchange="examDate(${gi},this.value)" style="font-size:15px;padding:8px;flex:1;width:auto;text-align:left"><button class="go" style="margin:0;width:auto;padding:10px 18px" onclick="examStart(${gi})">시험 보기</button></div><div class="count" style="font-size:12px;margin-top:4px">시험 날짜를 정하면 첫 화면에 D-day가 보여요</div></div>`}).join('');
 }
 window.examDate=(gi,v)=>{const g=groups()[gi][0];S.exam[g]=Object.assign(S.exam[g]||{},{date:v});save()};
-window.examStart=gi=>{const [g,ks]=groups()[gi];examRun(g,ks.map(k=>S.custom[k]),true)};
-function examRun(g,list,scored){
-  const q=shuffle(list).slice(0,50),ans=[];let i=0;
-  const show=()=>{
-    if(i>=q.length)return grade();
-    const c=q[i];
-    app.innerHTML=`<div class="top"><button class="back" onclick="if(confirm('시험을 그만둘까요?'))home()">← 그만두기</button><span class="count">시험 ${i+1}/${q.length}</span></div><div class="flash"><div class="hint">${scored?'📝 '+esc(g):'🔁 틀린 것 다시 풀기'}</div><div class="mean" style="font-size:34px">${esc(c.m)}</div><div class="hint">영어로 써 보세요</div></div><div style="margin-top:14px"><input id="ex" autocomplete="off" autocapitalize="none" spellcheck="false"><button class="go" onclick="exNext()">${i+1<q.length?'다음':'제출'}</button></div>`;
-    const e=$('#ex');e.addEventListener('keydown',ev=>{if(ev.key==='Enter')exNext()});e.focus();
+window.examStart=gi=>{const [g,ks]=groups()[gi];examRun(g,ks.map(k=>S.custom[k]))};
+function examRun(g,list){
+  let rows=shuffle(list).map(c=>({c,t:0,v:''})),round=1,right1=0;
+  const total=rows.length,bad1=[];
+  const hint=r=>r.t>=2?r.c.w[0]+' '+'_ '.repeat(Math.max(0,r.c.w.length-1)).trim():'';
+  const draw=(msg,good)=>{
+    app.innerHTML=`<div class="top"><button class="back" onclick="if(confirm('시험을 그만둘까요? 지금까지 푼 기록은 저장되지 않아요.'))home()">← 그만두기</button><span class="count">남은 단어 ${rows.length}/${total}</span></div><h1 style="font-size:24px">📝 ${esc(g)}</h1><div class="bar" style="margin:6px 0 10px"><i style="width:${Math.round((total-rows.length)/total*100)}%"></i></div>`
+    +(msg?`<div class="msg" style="color:${good?'var(--mint)':'var(--coral)'};font-size:17px;min-height:0;margin:0 0 10px">${msg}</div>`:`<p class="sub">뜻을 보고 영어를 써 보세요. 채점하면 맞힌 단어는 사라지고, 틀린 단어만 남아요.</p>`)
+    +rows.map((r,i)=>`<div class="exrow"><span class="exn">${i+1}</span><span class="exm">${esc(r.c.m)}</span><input id="e${i}" class="exin" value="${esc(r.v)}" placeholder="${esc(hint(r))}" autocomplete="off" autocapitalize="none" spellcheck="false" style="${r.t?'border-color:var(--coral)':''}" onkeydown="if(event.key==='Enter')exEnter(${i})">${r.t?`<button class="exsp" onclick="speak('${r.c.w}')">🔊</button>`:''}</div>`).join('')
+    +`<div class="exbar"><button class="go" style="margin:0" onclick="exGrade()">채점하기</button></div>`;
   };
-  window.exNext=()=>{ans.push(($('#ex').value||'').trim());i++;show()};
-  const grade=()=>{
-    const res=q.map((c,k)=>({c,a:ans[k],ok:nz(ans[k])===nz(c.w)})),right=res.filter(r=>r.ok).length,total=q.length,score=Math.round(right/total*100),bad=res.filter(r=>!r.ok);
-    res.forEach(r=>mark(r.c.w,r.ok,'spell',true));
-    let xp=0,best='';
-    if(scored){
-      xp=right*2+(score>=80?30:0)+(score===100?30:0);gain(xp);
-      const E=S.exam[g]=Object.assign(S.exam[g]||{},{best:Math.max((S.exam[g]||{}).best||0,score),last:score,lastDate:iso()});best=E.best;
-      if(score>=80)S.st.pass++;if(score===100)S.st.hundred++;
-      S.examLog=(S.examLog||[]).concat({id:Date.now(),date:iso(),g,score,right,total,wrong:bad.map(r=>r.c.w)}).slice(-50);
-    }
-    save();sync(true);checkBadges();sfx(score>=80?'done':'bad');
-    app.innerHTML=`<div class="end"><div class="word">${score>=80?'🎉':'💪'}</div><h1>${score}점</h1><p class="sub">${right}/${total} 정답${scored?(score>=80?' · 통과! ':' · 80점 이상이면 통과예요 · ')+'+'+xp+' XP':''}</p>${scored?`<p class="sub">최고 점수 ${best}점</p>`:''}</div>`+(bad.length?`<p class="sub">틀린 단어 ${bad.length}개</p>`+bad.map(r=>`<div class="stat" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;text-align:left"><button class="spk" style="width:40px;height:40px;font-size:18px" onclick="speak('${r.c.w}')">🔊</button><span style="flex:1"><b style="display:inline;font-size:18px">${esc(r.c.w)}</b> ${esc(r.c.m)}<br><span class="count">내 답: ${r.a?esc(r.a):'(빈칸)'}</span></span></div>`).join('')+`<button class="go" onclick="exRetry()">틀린 것만 다시 풀기</button>`:'<p class="sub" style="text-align:center">전부 맞혔어요! 🌟</p>')+`<button class="go" style="background:var(--card)" onclick="home()">처음으로</button>`;
-    window.exRetry=()=>examRun(g,bad.map(r=>r.c),false);
+  window.exEnter=i=>{const n=document.querySelector('#e'+(i+1));if(n&&i+1<rows.length)n.focus();else exGrade()};
+  window.exGrade=()=>{
+    const vals=rows.map((r,i)=>(($('#e'+i)||{}).value||'').trim());
+    const blank=vals.filter(v=>!v).length;
+    if(round===1&&blank&&!confirm('빈칸이 '+blank+'개 있어요. 빈칸은 틀린 걸로 쳐요. 그대로 채점할까요?'))return;
+    const keep=[];let hit=0;
+    rows.forEach((r,i)=>{
+      r.v=vals[i];const ok=nz(r.v)===nz(r.c.w);
+      if(r.t===0){if(ok)right1++;else bad1.push(r.c);mark(r.c.w,ok,'spell',true)}
+      else if(ok)mark(r.c.w,true,'spell',true);
+      if(ok)hit++;else{r.t++;keep.push(r)}
+    });
+    rows=keep;round++;
+    if(!rows.length)return finish();
+    sfx(hit?'ok':'bad');draw((hit?'✅ '+hit+'개 정답! ':'')+'❌ '+rows.length+'개 남았어요. 다시 도전!',hit>0);
+    window.scrollTo&&window.scrollTo(0,0);
   };
-  show();
+  const finish=()=>{
+    const score=Math.round(right1/total*100),xp=right1*2+(score>=80?30:0)+(score===100?30:0);
+    gain(xp);
+    const E=S.exam[g]=Object.assign(S.exam[g]||{},{best:Math.max((S.exam[g]||{}).best||0,score),last:score,lastDate:iso()});
+    if(score>=80)S.st.pass++;if(score===100)S.st.hundred++;
+    S.examLog=(S.examLog||[]).concat({id:Date.now(),date:iso(),g,score,right:right1,total,wrong:bad1.map(c=>c.w)}).slice(-50);
+    save();sync(true);checkBadges();sfx('done');
+    app.innerHTML=`<div class="end"><div class="word">${score>=80?'🎉':'💪'}</div><h1>모두 맞혔어요!</h1><p class="sub">첫 시도 점수 <b style="display:inline;font-size:22px">${score}점</b> (${right1}/${total}) · ${round-1}번 채점${score>=80?' · 통과!':''} · +${xp} XP</p><p class="sub">최고 점수 ${E.best}점</p></div>`
+    +(bad1.length?`<p class="sub">처음에 틀렸던 단어 ${bad1.length}개</p>`+bad1.map(c=>`<div class="stat" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;text-align:left"><button class="spk" style="width:40px;height:40px;font-size:18px" onclick="speak('${c.w}')">🔊</button><span style="flex:1"><b style="display:inline;font-size:18px">${esc(c.w)}</b> ${esc(c.m)}</span></div>`).join(''):'<p class="sub" style="text-align:center">처음부터 전부 맞혔어요! 🌟</p>')
+    +`<button class="go" onclick="home()">처음으로</button>`;
+  };
+  draw();
 }
 function ddayHtml(){
   const t=iso();let b=null;
