@@ -545,7 +545,7 @@ function groupsHtml(){
   const gs=groups();
   return `<p class="sub" style="margin-top:18px">추가한 단어 ${S.custom.length}개 · 폴더 ${gs.length}개</p>`+gs.map(([g,ks],gi)=>{
     const o=OPEN[g],nm=g.replace(/</g,'&lt;');
-    return `<div style="margin-bottom:10px"><button class="big" style="margin:0;padding:14px 16px;font-size:19px;display:flex;align-items:center;gap:8px" onclick="tg(${gi})"><span>${o?'📂':'📁'}</span><b style="flex:1;font-weight:normal">${nm}</b><span class="count" style="font-size:15px">${ks.length}개 ${o?'▾':'▸'}</span></button>`+(o?`<div style="padding:10px 2px 0"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px"><button class="link" style="margin:0" onclick="gcards(${gi})">📖 카드</button><button class="link" style="margin:0" onclick="gquiz(${gi})">🎯 퀴즈</button><button class="link" style="margin:0" onclick="gspell(${gi})">✏️ 쓰기</button><button class="link" style="margin:0" onclick="gpron(${gi})">🎤 발음</button><button class="link" style="margin:0;color:var(--coral)" onclick="gdel(${gi})">폴더 삭제</button></div>`+ks.map(k=>{const c=S.custom[k];return `<div class="stat" style="display:flex;align-items:center;gap:8px;margin:8px 0 0;text-align:left"><button class="spk" style="width:40px;height:40px;font-size:18px" onclick="speak('${c.w}')">🔊</button><span style="flex:1"><b style="display:inline;font-size:18px">${c.w}</b> ${c.m}</span><button class="link" style="margin:0" onclick="del(${k})">삭제</button></div>`}).join('')+`</div>`:'')+`</div>`}).join('');
+    return `<div style="margin-bottom:10px"><button class="big" style="margin:0;padding:14px 16px;font-size:19px;display:flex;align-items:center;gap:8px" onclick="tg(${gi})"><span>${o?'📂':'📁'}</span><b style="flex:1;font-weight:normal">${nm}</b><span class="count" style="font-size:15px">${ks.length}개 ${o?'▾':'▸'}</span></button>`+(o?`<div style="padding:10px 2px 0"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px"><button class="link" style="margin:0" onclick="gcards(${gi})">📖 카드</button><button class="link" style="margin:0" onclick="gquiz(${gi})">🎯 퀴즈</button><button class="link" style="margin:0" onclick="gspell(${gi})">✏️ 쓰기</button><button class="link" style="margin:0" onclick="gpron(${gi})">🎤 발음</button><button class="link" style="margin:0" onclick="gadd(${gi})">➕ 단어 추가</button><button class="link" style="margin:0;color:var(--coral)" onclick="gdel(${gi})">폴더 삭제</button></div>`+ks.map(k=>{const c=S.custom[k];return `<div class="stat" style="display:flex;align-items:center;gap:8px;margin:8px 0 0;text-align:left"><button class="spk" style="width:40px;height:40px;font-size:18px" onclick="speak('${c.w}')">🔊</button><span style="flex:1"><b style="display:inline;font-size:18px">${c.w}</b> ${c.m}</span><button class="link" style="margin:0" onclick="del(${k})">삭제</button></div>`}).join('')+`</div>`:'')+`</div>`}).join('');
 }
 function cleanLine(l){
   l=l.replace(/[|\t]+/g,' ').replace(/^[\s\d.)\-•*]+/,'');
@@ -558,7 +558,7 @@ function cleanLine(l){
 }
 function prep(file){return new Promise(res=>{const im=new Image();im.onload=()=>{try{const sc=Math.min(2.5,2200/Math.max(im.width,1));const c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);const g=c.getContext('2d');g.drawImage(im,0,0,c.width,c.height);const d=g.getImageData(0,0,c.width,c.height),a=d.data;for(let i=0;i<a.length;i+=4){let v=a[i]*.3+a[i+1]*.59+a[i+2]*.11;v=Math.max(0,Math.min(255,(v-110)*1.6+110));a[i]=a[i+1]=a[i+2]=v}g.putImageData(d,0,0);c.toBlob(b=>res(b||file),'image/png')}catch(e){res(file)}};im.onerror=()=>res(file);im.src=URL.createObjectURL(file)})}
 function addw(){
-  app.innerHTML=`<div class="top"><button class="back" onclick="home()">← 처음으로</button></div><h1>내 단어 추가</h1><p class="sub">한 줄에 하나씩, “영어 뜻” 형식으로 써주세요.<br>예) apple 사과</p><button class="go" style="background:var(--mint);margin:0 0 8px" onclick="$('#ph').click()">📷 사진에서 단어 읽기</button><input type="file" id="ph" accept="image/*" hidden><div class="msg" id="st" style="font-size:15px;min-height:22px;margin:0 0 8px"></div><input id="gn" placeholder="그룹 이름 (예: 3과, 학원 단어)" style="font-size:18px;margin-bottom:8px"><textarea id="ta" placeholder="apple 사과&#10;banana 바나나"></textarea><button class="go" onclick="addSave()">저장하기</button><div class="msg" id="r"></div><div id="gl">${groupsHtml()}</div>`;
+  app.innerHTML=`<div class="top"><button class="back" onclick="home()">← 처음으로</button></div><h1>내 단어 추가</h1><p class="sub">한 줄에 하나씩, “영어 뜻” 형식으로 써주세요.<br>예) apple 사과</p><button class="go" style="background:var(--mint);margin:0 0 8px" onclick="$('#ph').click()">📷 사진에서 단어 읽기</button><input type="file" id="ph" accept="image/*" hidden><div class="msg" id="st" style="font-size:15px;min-height:22px;margin:0 0 8px"></div><label class="sub" style="margin:0">저장할 폴더</label><select id="gsel" onchange="gselChange()" style="width:100%;font:inherit;font-size:18px;padding:12px;border-radius:14px;border:2px solid var(--ink);background:var(--card);color:var(--ink);margin:4px 0 8px"><option value="__new">➕ 새 폴더 만들기</option>${groups().map(([g,ks])=>`<option value="${esc(g)}">📁 ${esc(g)} (${ks.length}개)</option>`).join('')}</select><input id="gn" placeholder="새 폴더 이름 (예: Day 9, 3과)" style="font-size:18px;margin-bottom:8px"><textarea id="ta" placeholder="apple 사과&#10;banana 바나나"></textarea><button class="go" onclick="addSave()">저장하기</button><div class="msg" id="r"></div><div id="gl">${groupsHtml()}</div>`;
   window.tg=gi=>{const g=groups()[gi][0];OPEN[g]=!OPEN[g];refresh()};
   window.del=k=>{S.custom.splice(k,1);save();refresh()};
   window.ocr=async f=>{
@@ -577,10 +577,19 @@ function addw(){
     }catch(e){st.textContent='읽기에 실패했어요. 인터넷 연결을 확인해 주세요.'}
   };
   $('#ph').onchange=e=>{ocr(e.target.files[0]);e.target.value=''};
+  window.gselChange=()=>{const v=$('#gsel').value,e=$('#gn');if(e)e.style.display=v==='__new'?'':'none'};
+  window.gadd=gi=>{const g=groups()[gi][0],e=$('#gsel');if(e){e.value=g;gselChange()}try{window.scrollTo(0,0);$('#ta').focus()}catch(x){}};
   window.addSave=()=>{
-    let n=0;const g=$('#gn').value.trim()||(new Date().getMonth()+1)+'/'+new Date().getDate()+' 추가';
-    $('#ta').value.split('\n').forEach(l=>{l=l.trim();const mm=l.match(/^([A-Za-z][A-Za-z'.-]*(?:\s+[A-Za-z][A-Za-z'.-]*)*)\s+(\S.*)$/);if(mm){const w=mm[1],m=mm[2].trim();if(m&&!words().some(x=>x.w===w)){S.custom.push({w,m,g});n++}}});
-    save();addw();$('#r').textContent=n+'개 저장했어요!';
+    const sel=$('#gsel').value;
+    const g=sel==='__new'?($('#gn').value.trim()||(new Date().getMonth()+1)+'/'+new Date().getDate()+' 추가'):sel;
+    let n=0,bad=0;const dup=[];
+    $('#ta').value.split('\n').forEach(l=>{l=l.trim();if(!l)return;const mm=l.match(/^([A-Za-z][A-Za-z'.-]*(?:\s+[A-Za-z][A-Za-z'.-]*)*)\s+(\S.*)$/);
+      if(!mm){bad++;return}
+      const w=mm[1],m=mm[2].trim();
+      if(words().some(x=>x.w===w))dup.push(w);else{S.custom.push({w,m,g});n++}});
+    save();addw();
+    const e=$('#gsel');if(e&&groups().some(x=>x[0]===g)){e.value=g;gselChange()}
+    $('#r').textContent=n+'개를 "'+g+'" 폴더에 저장했어요!'+(dup.length?' 이미 있는 단어 '+dup.length+'개는 건너뛰었어요('+dup.slice(0,5).join(', ')+(dup.length>5?' …':'')+').':'')+(bad?' 형식이 달라 읽지 못한 줄 '+bad+'개.':'');
   };
   window.gcards=gi=>cards(groups()[gi][0]);
   window.gquiz=gi=>quiz(groups()[gi][0]);
