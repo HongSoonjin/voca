@@ -84,7 +84,8 @@ S.st=Object.assign({perfect:0,pass:0,hundred:0,pron:0,maxCombo:0,right:0},S.st);
 S.cat=Object.assign({head:'',side:'',left:'',sky:'',bg:''},S.cat);
 const save=()=>{try{localStorage.setItem('vocaS',JSON.stringify(S))}catch(e){}};
 const day=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
-const words=()=>{const seen={};return BASE.concat(HARD).filter(x=>(S.lv==='all'||(S.lv==='2'?x.l===2:!x.l))&&!seen[x.w]&&(seen[x.w]=1)).concat(S.custom)};
+const uniqBy=a=>{const z={};return a.filter(x=>!z[x.w]&&(z[x.w]=1))};
+const words=()=>{const cu=uniqBy(S.custom),cs={};cu.forEach(c=>cs[c.w]=1);return uniqBy(BASE.concat(HARD).filter(x=>(S.lv==='all'||(S.lv==='2'?x.l===2:!x.l))&&!cs[x.w])).concat(cu)};
 window.setLv=v=>{S.lv=v;save();home()};
 const box=w=>S.box[w]||0;
 function speak(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.85;speechSynthesis.speak(u)}catch(e){}}
@@ -126,12 +127,12 @@ function mark(w,ok,kind,ms){
 }
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 function pick(n,only){ // weakest boxes first, random within box
-  const all=shuffle(only==='__wrong'?wrongPool():only===true?S.custom:only?S.custom.filter(c=>gname(c)===only):words());all.sort((a,b)=>(due(b.w)-due(a.w))||(box(a.w)-box(b.w)));return shuffle(all.slice(0,n));
+  const all=shuffle(only==='__wrong'?wrongPool():only===true?uniqBy(S.custom):only?uniqBy(S.custom.filter(c=>gname(c)===only)):words());all.sort((a,b)=>(due(b.w)-due(a.w))||(box(a.w)-box(b.w)));return shuffle(all.slice(0,n));
 }
 const iso=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function payload(){
-  const C=S.cfg||{},t=day(),T=S.today.d===t?S.today:{},all=BASE.concat(HARD,S.custom);
+  const C=S.cfg||{},t=day(),T=S.today.d===t?S.today:{},all=uniqBy(BASE.concat(HARD,S.custom));
   return{token:C.token,kid:C.kid||'',date:iso(),
     sum:{words:T.n||0,tries:T.tr||0,right:T.ok||0,xpToday:T.xp||0,mission:T.done?1:0,missionCount:T.mn||0,xp:S.xp||0,level:lv(S.xp),title:ttl(lv(S.xp)).replace(/^\S+\s/,''),streak:S.streak||0,known:all.filter(x=>box(x.w)>=4).length,total:all.length},
     wrong:Object.entries(S.wrong||{}).sort((a,b)=>b[1].c-a[1].c).slice(0,300).map(([w,o])=>({w,m:o.m,c:o.c,d:o.d,box:box(w)}))};
@@ -212,7 +213,7 @@ window.pet=()=>{
   }catch(e){}
 };
 const topbar='<div class="top"><button class="back" onclick="home()">← 처음으로</button></div>';
-const known=()=>BASE.concat(HARD,S.custom).filter(x=>box(x.w)>=4).length;
+const known=()=>uniqBy(BASE.concat(HARD,S.custom)).filter(x=>box(x.w)>=4).length;
 const api=(C,act)=>C.url+(C.url.indexOf('?')<0?'?':'&')+'action='+act+'&token='+encodeURIComponent(C.token)+'&kid='+encodeURIComponent(C.kid||'');
 function cfgBackup(){
   if(!cfgSave())return;
@@ -283,7 +284,7 @@ function catRoom(){
 }
 window.catEq=i=>{const it=CAT_ITEMS[i];if(!itemOpen(it))return;S.cat=Object.assign({head:'',side:'',left:'',sky:'',bg:''},S.cat);S.cat[it[0]]=S.cat[it[0]]===it[1]?'':it[1];save();catRoom()};
 window.catClear=()=>{S.cat={head:'',side:'',left:'',sky:'',bg:''};save();catRoom()};
-function wrongPool(){const all=BASE.concat(HARD,S.custom);return Object.keys(S.wrong||{}).filter(w=>box(w)<4).map(w=>all.find(x=>x.w===w)||{w,m:(S.wrong[w]||{}).m||''}).filter(x=>x.m)}
+function wrongPool(){const all=S.custom.concat(BASE,HARD);return Object.keys(S.wrong||{}).filter(w=>box(w)<4).map(w=>all.find(x=>x.w===w)||{w,m:(S.wrong[w]||{}).m||''}).filter(x=>x.m)}
 function wrongNote(){
   const p=wrongPool();
   if(!p.length){alert('복습할 틀린 단어가 없어요 🎉');return}
@@ -586,10 +587,10 @@ function addw(){
     $('#ta').value.split('\n').forEach(l=>{l=l.trim();if(!l)return;const mm=l.match(/^([A-Za-z][A-Za-z'.-]*(?:\s+[A-Za-z][A-Za-z'.-]*)*)\s+(\S.*)$/);
       if(!mm){bad++;return}
       const w=mm[1],m=mm[2].trim();
-      if(words().some(x=>x.w===w))dup.push(w);else{S.custom.push({w,m,g});n++}});
+      if(S.custom.some(x=>x.w===w&&gname(x)===g))dup.push(w);else{S.custom.push({w,m,g});n++}});
     save();addw();
     const e=$('#gsel');if(e&&groups().some(x=>x[0]===g)){e.value=g;gselChange()}
-    $('#r').textContent=n+'개를 "'+g+'" 폴더에 저장했어요!'+(dup.length?' 이미 있는 단어 '+dup.length+'개는 건너뛰었어요('+dup.slice(0,5).join(', ')+(dup.length>5?' …':'')+').':'')+(bad?' 형식이 달라 읽지 못한 줄 '+bad+'개.':'');
+    $('#r').textContent=n+'개를 "'+g+'" 폴더에 저장했어요!'+(dup.length?' 이 폴더에 이미 있는 단어 '+dup.length+'개는 건너뛰었어요('+dup.slice(0,5).join(', ')+(dup.length>5?' …':'')+').':'')+(bad?' 형식이 달라 읽지 못한 줄 '+bad+'개.':'');
   };
   window.gcards=gi=>cards(groups()[gi][0]);
   window.gquiz=gi=>quiz(groups()[gi][0]);
